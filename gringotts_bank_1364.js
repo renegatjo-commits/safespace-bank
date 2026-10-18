@@ -1,7 +1,7 @@
 // Safe Space / Gringotts — внешний файл для HTML-низа
 // Встроенный интерфейс доступен только администратору в теме /viewtopic.php?id=1364.
 
-/* Safe Space / Gringotts: закрытый сборщик заявок v2.10 (предыдущие заявки и новые посты только выбранного профиля).
+/* Safe Space / Gringotts: закрытый сборщик заявок v2.12 (предыдущие заявки и новые посты только выбранного профиля).
  * Показывается только на safespace.rusff.me/viewtopic.php?id=1364,
  * только авторизованным администраторам форума (GroupID===1).
  * Использует тарифы по действующим правилам банка, а историю заявок
@@ -32,7 +32,7 @@
   if (!document.getElementById('ssbc-external-styles')) {
     var bankStyle = document.createElement('style');
     bankStyle.id = 'ssbc-external-styles';
-    bankStyle.textContent = "/* Дизайн согласован с темой банка Гринготтс */\n\n.ssbc-wrap { box-sizing: border-box; width: 94%; max-width: 900px; margin: 24px auto;\n  background: #f4f0e8; border: 1px solid #d8d0c5; border-radius: 12px;\n  padding: 19px; font-family: Arial, sans-serif; color: #403a43; }\n.ssbc-wrap .ssbc-headline { font-family: Georgia, serif; font-weight: normal; text-align:center; font-size: 19px; color: #4b3b59; margin: 0 0 6px; }\n.ssbc-wrap .ssbc-intro { color: #766f77; font-size: 12px; line-height: 1.65; text-align: center; margin: 0 0 17px; }\n.ssbc-wrap .ssbc-fields { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-bottom: 14px; }\n.ssbc-wrap .ssbc-fields label { flex: 1 1 175px; display:flex; flex-direction:column; gap:6px; font-size:12px; color:#51415e; }\n.ssbc-wrap .ssbc-fields select, .ssbc-wrap .ssbc-fields input { font: 13px Arial, sans-serif; color:#403a43; border-radius:8px; border:1px solid #cbc0d1; box-sizing:border-box; padding:9px; width:100%; background:#fff; }\n.ssbc-wrap .ssbc-check { display:block; font-size:12px; color:#625a66; line-height:1.5; margin:10px 0 15px; }\n.ssbc-wrap .ssbc-check input, .ssbc-wrap .ssbc-confirm input, .ssbc-wrap .ssbc-row input { vertical-align:middle; accent-color:#695485; }\n.ssbc-wrap .ssbc-button { display:inline-block; border:0; border-radius:8px; padding:11px 17px; font: 12px Arial, sans-serif; cursor:pointer; background:#5f4c75; color:#fff; transition: .2s; }\n.ssbc-wrap .ssbc-button:hover { background: #48345e; }\n.ssbc-wrap .ssbc-button:disabled { opacity:.48; cursor:default; }\n.ssbc-wrap .ssbc-button-light { background:#e4dce9; color:#45394f; }\n.ssbc-wrap .ssbc-button-light:hover { background:#d4c5dd; }\n.ssbc-wrap .ssbc-status { margin:14px 0; border-left:3px solid #a98e61; padding:10px 12px; background:#ece8e2; font-size:12px; line-height:1.5; }\n.ssbc-wrap .ssbc-status.ok { border-color:#678269; background:#e3e9e1; }\n.ssbc-wrap .ssbc-status.error, .ssbc-wrap .ssbc-alert { border-color:#ad665f; background:#f3e4e0; }\n.ssbc-wrap .ssbc-summary { background:#e6ddeb; border-radius:9px; padding:14px; line-height:1.75; text-align:center; margin-top:16px; font-size:13px; color:#453354; }\n.ssbc-wrap .ssbc-small { font-size:11px; line-height:1.5; color:#756e79; }\n.ssbc-wrap .ssbc-alert { border-left:3px solid #ad665f; padding:12px; margin:12px 0; font-size:11px; line-height:1.7; border-radius:4px; }\n.ssbc-wrap .ssbc-alert details { margin-top:6px; max-height:180px; overflow:auto; }\n.ssbc-wrap .ssbc-alert summary { cursor:pointer; }\n.ssbc-wrap .ssbc-rows { max-height:360px; overflow:auto; margin:10px 0 15px; }\n.ssbc-wrap .ssbc-row { display:flex; align-items:center; justify-content:space-between; gap:10px; border-bottom:1px solid #ded6ce; padding:9px 4px; font-size:12px; }\n.ssbc-wrap .ssbc-row label { min-width:0; line-height:1.5; }\n.ssbc-wrap .ssbc-row small { color:#817886; font-size:10px; }\n.ssbc-wrap .ssbc-row b { white-space:nowrap; color:#5a466b; }\n.ssbc-wrap .ssbc-confirm { display:block; padding:12px; font-size:12px; line-height:1.5; background:#f3e4e0; border-radius:8px; margin:8px 0 15px; }\n.ssbc-wrap .ssbc-actions { display:flex; gap:9px; align-items:center; flex-wrap:wrap; margin:12px 0; }\n.ssbc-wrap .ssbc-actions[hidden], .ssbc-wrap #ssbc-custom[hidden] { display:none!important; }\n.ssbc-wrap #ssbc-text { width:100%; min-height:175px; resize:vertical; box-sizing:border-box; border:1px solid #cbc0d1; padding:12px; border-radius:8px; font:12px/1.5 Consolas,monospace; color:#3b3440; background:white; }\n.ssbc-wrap .ssbc-oldclaims { margin: 14px 0; padding: 13px; background: #faf8f4; border: 1px solid #d8d0c5; border-radius: 9px; }\n.ssbc-wrap .ssbc-oldclaims h4 { margin: 0 0 10px; font: normal 15px Georgia,serif; color:#4b3b59; }\n.ssbc-wrap .ssbc-oldclaims-list { max-height:300px; overflow-y:auto; overflow-wrap:anywhere; }\n.ssbc-wrap .ssbc-oldclaims-list .ssbc-claim-entry { padding:5px 3px; border-bottom:1px solid #e9e1d7; font-size:12px; line-height:1.5; }\n.ssbc-wrap .ssbc-oldclaims-list .ssbc-claim-entry:last-child { border-bottom:0; }\n.ssbc-wrap .ssbc-oldclaims-list a { color:#5f4c75; text-decoration: underline; }\n@media(max-width:650px){.ssbc-wrap {width:100%;padding:12px;} .ssbc-wrap .ssbc-headline{font-size:16px;} .ssbc-wrap .ssbc-row{flex-wrap:wrap;} .ssbc-wrap .ssbc-fields{gap:9px;} .ssbc-wrap .ssbc-button{padding:10px 11px;} }";
+    bankStyle.textContent = "/* Дизайн согласован с темой банка Гринготтс */\n\n.ssbc-wrap { box-sizing: border-box; width: 94%; max-width: 900px; margin: 24px auto;\n  background: #f4f0e8; border: 1px solid #d8d0c5; border-radius: 12px;\n  padding: 19px; font-family: Arial, sans-serif; color: #403a43; }\n.ssbc-wrap .ssbc-headline { font-family: Georgia, serif; font-weight: normal; text-align:center; font-size: 19px; color: #4b3b59; margin: 0 0 6px; }\n.ssbc-wrap .ssbc-intro { color: #766f77; font-size: 12px; line-height: 1.65; text-align: center; margin: 0 0 17px; }\n.ssbc-wrap .ssbc-fields { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-bottom: 14px; }\n.ssbc-wrap .ssbc-fields label { flex: 1 1 175px; display:flex; flex-direction:column; gap:6px; font-size:12px; color:#51415e; }\n.ssbc-wrap .ssbc-fields select, .ssbc-wrap .ssbc-fields input { font: 13px Arial, sans-serif; color:#403a43; border-radius:8px; border:1px solid #cbc0d1; box-sizing:border-box; padding:9px; width:100%; background:#fff; }\n.ssbc-wrap .ssbc-check { display:block; font-size:12px; color:#625a66; line-height:1.5; margin:10px 0 15px; }\n.ssbc-wrap .ssbc-check input, .ssbc-wrap .ssbc-confirm input, .ssbc-wrap .ssbc-row input { vertical-align:middle; accent-color:#695485; }\n.ssbc-wrap .ssbc-button { display:inline-block; border:0; border-radius:8px; padding:11px 17px; font: 12px Arial, sans-serif; cursor:pointer; background:#5f4c75; color:#fff; transition: .2s; }\n.ssbc-wrap .ssbc-button:hover { background: #48345e; }\n.ssbc-wrap .ssbc-button:disabled { opacity:.48; cursor:default; }\n.ssbc-wrap .ssbc-button-light { background:#e4dce9; color:#45394f; }\n.ssbc-wrap .ssbc-button-light:hover { background:#d4c5dd; }\n.ssbc-wrap .ssbc-status { margin:14px 0; border-left:3px solid #a98e61; padding:10px 12px; background:#ece8e2; font-size:12px; line-height:1.5; }\n.ssbc-wrap .ssbc-status.ok { border-color:#678269; background:#e3e9e1; }\n.ssbc-wrap .ssbc-status.error, .ssbc-wrap .ssbc-alert { border-color:#ad665f; background:#f3e4e0; }\n.ssbc-wrap .ssbc-summary { background:#e6ddeb; border-radius:9px; padding:14px; line-height:1.75; text-align:center; margin-top:16px; font-size:13px; color:#453354; }\n.ssbc-wrap .ssbc-small { font-size:11px; line-height:1.5; color:#756e79; }\n.ssbc-wrap .ssbc-alert { border-left:3px solid #ad665f; padding:12px; margin:12px 0; font-size:11px; line-height:1.7; border-radius:4px; }\n.ssbc-wrap .ssbc-alert details { margin-top:6px; max-height:180px; overflow:auto; }\n.ssbc-wrap .ssbc-alert summary { cursor:pointer; }\n.ssbc-wrap .ssbc-rows { max-height:360px; overflow:auto; margin:10px 0 15px; }\n.ssbc-wrap .ssbc-row { display:flex; align-items:center; justify-content:space-between; gap:10px; border-bottom:1px solid #ded6ce; padding:9px 4px; font-size:12px; }\n.ssbc-wrap .ssbc-row label { min-width:0; line-height:1.5; }\n.ssbc-wrap .ssbc-row small { color:#817886; font-size:10px; }\n.ssbc-wrap .ssbc-row b { white-space:nowrap; color:#5a466b; }\n.ssbc-wrap .ssbc-confirm { display:block; padding:12px; font-size:12px; line-height:1.5; background:#f3e4e0; border-radius:8px; margin:8px 0 15px; }\n.ssbc-wrap .ssbc-actions { display:flex; gap:9px; align-items:center; flex-wrap:wrap; margin:12px 0; }\n.ssbc-wrap .ssbc-actions[hidden], .ssbc-wrap #ssbc-custom[hidden] { display:none!important; }\n.ssbc-wrap #ssbc-text { width:100%; min-height:175px; resize:vertical; box-sizing:border-box; border:1px solid #cbc0d1; padding:12px; border-radius:8px; font:12px/1.5 Consolas,monospace; color:#3b3440; background:white; }\n.ssbc-wrap .ssbc-oldclaims { margin: 14px 0; padding: 13px; background: #faf8f4; border: 1px solid #d8d0c5; border-radius: 9px; }\n.ssbc-wrap .ssbc-oldclaims h4 { margin: 0 0 10px; font: normal 15px Georgia,serif; color:#4b3b59; }\n.ssbc-wrap .ssbc-oldclaims-list { max-height:300px; overflow-y:auto; overflow-wrap:anywhere; }\n.ssbc-wrap .ssbc-oldclaims-list .ssbc-claim-entry { padding:5px 3px; border-bottom:1px solid #e9e1d7; font-size:12px; line-height:1.5; }\n.ssbc-wrap .ssbc-oldclaims-list .ssbc-claim-entry:last-child { border-bottom:0; }\n.ssbc-wrap .ssbc-oldclaims-list a { color:#5f4c75; text-decoration: underline; }\n.ssbc-wrap #ssbc-progress[hidden] {display:none!important;}\n.ssbc-wrap #ssbc-progress {padding:12px 14px; margin:12px 0 15px; border:1px solid #d8d0c5; background:#faf8f4; border-radius:9px;}\n.ssbc-wrap .ssbc-progress-top {display:flex; justify-content:space-between; align-items:center; gap:14px; color:#51415e; font:12px/1.4 Arial,sans-serif; margin-bottom:8px;}\n.ssbc-wrap #ssbc-progress-pct {font-weight:700; color:#4b3b59; white-space:nowrap; font-variant-numeric:tabular-nums;}\n.ssbc-wrap #ssbc-progress-bar {display:block; width:100%;height:12px;border:0;border-radius:20px;overflow:hidden;background:#e4dce9;accent-color:#806a99;}\n.ssbc-wrap #ssbc-progress-bar::-webkit-progress-bar {background:#e4dce9;border-radius:20px;}\n.ssbc-wrap #ssbc-progress-bar::-webkit-progress-value {background:linear-gradient(90deg,#806a99,#5f4c75);border-radius:20px;transition:width .22s ease;}\n.ssbc-wrap #ssbc-progress-bar::-moz-progress-bar {background:#806a99;border-radius:20px;}\n.ssbc-wrap #ssbc-progress[data-state='error'] {border-color:#ad665f;}\n.ssbc-wrap #ssbc-progress[data-state='done'] {border-color:#678269;}\n\n@media(max-width:650px){.ssbc-wrap {width:100%;padding:12px;} .ssbc-wrap .ssbc-headline{font-size:16px;} .ssbc-wrap .ssbc-row{flex-wrap:wrap;} .ssbc-wrap .ssbc-fields{gap:9px;} .ssbc-wrap .ssbc-button{padding:10px 11px;} }";
     document.head.appendChild(bankStyle);
   }
   // У Rusff оформление темы может менять вложенность .post и .topicpost.
@@ -72,6 +72,13 @@
           </label>
         </div>
         <button type="button" id="ssbc-scan" class="ssbc-button">Проверить</button>
+        <div id="ssbc-progress" hidden>
+          <div class="ssbc-progress-top">
+            <span id="ssbc-progress-stage">Начинаю проверку…</span>
+            <strong id="ssbc-progress-pct">0%</strong>
+          </div>
+          <progress id="ssbc-progress-bar" min="0" max="100" value="0" aria-label="Прогресс проверки"></progress>
+        </div>
         <div id="ssbc-status" class="ssbc-status">Выберите игрока и период</div>
         <div id="ssbc-result" aria-live="polite"></div>
         <div id="ssbc-actions" hidden>
@@ -111,6 +118,39 @@
   var userName = String(window.UserLogin || '');
   var state = { rows: [], used: new Map(), suspicious: [], claimDetails: new Map(), priorClaims: [], full: false, raw: '', historyCount: 0 };
   var bankHistoryCache = null; // только на время открытой страницы, без хранения на сервере/в localStorage
+  // Прогресс отражает фактически обработанные страницы/заявки/эпизоды.
+  // Этапы имеют веса; это доля выполненной работы, а не оценка оставшихся секунд.
+  var progressValue = 0;
+  function progressReset() {
+    progressValue = 0;
+    var box = $('#ssbc-progress');
+    box.hidden = true;
+    box.removeAttribute('data-state');
+    $('#ssbc-progress-pct').textContent = '0%';
+    $('#ssbc-progress-bar').value = 0;
+    $('#ssbc-progress-stage').textContent = 'Начинаю проверку…';
+  }
+  function progressStart() {
+    progressReset();
+    $('#ssbc-progress').hidden = false;
+    progressTo(0, 'Проверяю предыдущие заявки…');
+  }
+  function progressTo(value, label) {
+    var n = Math.max(0, Math.min(100, Math.floor(Number(value) || 0)));
+    progressValue = Math.max(progressValue, n); // процент никогда не уменьшается
+    $('#ssbc-progress-bar').value = progressValue;
+    $('#ssbc-progress-pct').textContent = progressValue + '%';
+    if (label) $('#ssbc-progress-stage').textContent = label;
+  }
+  function progressDone() {
+    progressTo(100, 'Проверка завершена');
+    $('#ssbc-progress').dataset.state = 'done';
+  }
+  function progressFailed() {
+    $('#ssbc-progress').dataset.state = 'error';
+    $('#ssbc-progress-stage').textContent = 'Проверка остановлена';
+  }
+
   var b = function (s) { return String(s == null ? '' : s); };
   var sleep = function (n) { return new Promise(function (done) { setTimeout(done, n); }); };
 
@@ -120,34 +160,24 @@
   function mentionsPostWord(text) {
     return claimPostWord.test(b(text).replace(/\u00a0/g, ' '));
   }
-  // Старые заявки показываем только для выбранного профиля.
-  // Второй источник связи: заявление может быть написано другим аккаунтом,
-  // но включать реальные игровые сообщения выбранного игрока.
-  // Такие связи проверяются по ID конкретных игровых постов, а не по имени.
-  function getPriorClaims(history, targetId, playerPosts) {
+  // ИСТОРИЯ В ИНТЕРФЕЙСЕ: только заявки, реально написанные выбранным профилем.
+  // Это НЕ меняет общий реестр оплаченных игровых постов history.used:
+  // ссылки из заявок ЛЮБЫХ профилей по-прежнему исключают повторный учёт.
+  // Важно: не добавлять сюда чужие банковские сообщения только потому, что
+  // в них встречается ссылка на пост проверяемого игрока.
+  function getPriorClaims(history, targetId) {
     var authorId = Number(targetId);
-    var bankIdsForPlayerPosts = new Set();
-    (playerPosts || []).forEach(function (post) {
-      var record = history.used.get(Number(post.id));
-      if (record && record.bankPostId) bankIdsForPlayerPosts.add(Number(record.bankPostId));
-    });
-    // Один и тот же набор заявок используется в видимом списке и в готовом BBCode.
-    // Учитываются свои заявки и заявки с другого профиля на посты выбранного игрока.
     return (history.postClaimMessages || []).filter(function (entry) {
-      return Number(entry.userId) === authorId || bankIdsForPlayerPosts.has(Number(entry.id));
+      return Number(entry.userId) === authorId;
     }).slice().sort(function (a, z) { return z.id - a.id; });
   }
-  function renderPriorClaims(messages, targetId) {
-    var authorId = Number(targetId);
+  function renderPriorClaims(messages) {
     var html = '<section class="ssbc-oldclaims"><h4>Ваши предыдущие заявки на посты:</h4>';
     html += '<div class="ssbc-oldclaims-list">';
     if (!messages.length) html += '<p class="ssbc-small">Предыдущих заявок не найдено.</p>';
     else html += messages.map(function (entry) {
-      var foreign = Number(entry.userId) !== authorId;
       return '<div class="ssbc-claim-entry"><a target="_blank" rel="noopener noreferrer" href="' +
-        link(entry.id) + '">Заявка #' + entry.id + '</a>' +
-        (foreign ? ' <span class="ssbc-small">(с другого профиля' +
-          (entry.author ? ': ' + escapeHtml(entry.author) : '') + ')</span>' : '') + '</div>';
+        link(entry.id) + '">Заявка #' + entry.id + '</a></div>';
     }).join('');
     html += '</div></section>';
     return html;
@@ -325,6 +355,8 @@
         try {
           result.set(id, await rawBankPost(id));
           finished++;
+          progressTo(18 + 47 * finished / Math.max(bankPostIds.length, 1),
+            'Проверка предыдущих заявок: ' + finished + ' из ' + bankPostIds.length);
           if (finished === 1 || finished % 10 === 0 || finished === bankPostIds.length)
             show('Исходный BBCode банка №' + topicId + ': проверено ' + finished + ' из ' + bankPostIds.length + ' старых заявок…');
         } catch (e) {
@@ -364,6 +396,7 @@
           sort_by: 'posted', sort_dir: 'asc', skip: skip, limit: CFG.pageSize
         }));
         apiRows.push.apply(apiRows, page);
+        progressTo(8 * Math.min(apiRows.length, expected) / expected, 'Получаю историю банка…');
         if (!page.length) break;
         await sleep(CFG.delayMs);
       }
@@ -399,12 +432,18 @@
       var ids = new Set([...seenInRender, ...rawData.ids]);
       rawData.ids.forEach(function (id) { if (!seenInRender.has(id)) restoredFromRaw++; });
       var author = b((apiPost && apiPost.username) || htmlPost.username || '');
+      var apiAuthorId = Number(apiPost && apiPost.user_id) || 0;
+      var htmlAuthorId = Number(htmlPost.user_id) || 0;
+      // При противоречии между двумя источниками не приписываем заявку
+      // ни одному профилю, но все её ссылки сохраняем для защиты от дублей.
+      var bankAuthorId = apiAuthorId && htmlAuthorId && apiAuthorId !== htmlAuthorId
+        ? 0 : (apiAuthorId || htmlAuthorId);
       // Список прежних заявок составляем по ВСЕМ исходным сообщениям банка,
       // а не только по сообщениям с распознанными ссылками на игровые посты.
       if ([rawById.get(bankPostId), htmlPost.message, apiPost && apiPost.message]
           .some(mentionsPostWord)) {
         postClaimMessages.push({id: bankPostId, author: author,
-          userId: Number((apiPost && apiPost.user_id) || htmlPost.user_id || 0)});
+          userId: bankAuthorId});
       }
       claimDetails.set(bankPostId, {
         ids:ids, htmlIds:htmlData.ids, apiIds:apiData.ids, rawIds:rawData.ids,
@@ -417,7 +456,7 @@
       });
       if (!ids.size && (htmlData.uncertain || apiData.uncertain || rawData.uncertain)) {
         uncertain.push({id:bankPostId, topicId:topicId,
-          userId:Number((apiPost && apiPost.user_id) || htmlPost.user_id || 0), author:author});
+          userId:bankAuthorId, author:author});
       }
     });
     return {used:used, suspicious:uncertain, historyCount:htmlById.size - 1,
@@ -428,7 +467,10 @@
   async function bankHistory() {
     // В течение одной открытой страницы не читаем сотни исходников заново.
     // Перезагрузка вкладки сбрасывает кэш и читает обновлённые заявления.
-    if (bankHistoryCache) return bankHistoryCache;
+    if (bankHistoryCache) {
+      progressTo(65, 'История банка уже проверена');
+      return bankHistoryCache;
+    }
     var used = new Map();
     var suspicious = [];
     var historyCount = 0;
@@ -446,6 +488,7 @@
       rawCount += h.rawCount;
       restoredFromRaw += h.restoredFromRaw;
     }
+    progressTo(65, 'История предыдущих заявок проверена');
     bankHistoryCache = {used:used, suspicious:suspicious, historyCount:historyCount,
       claimDetails:claimDetails, rawCount:rawCount, restoredFromRaw:restoredFromRaw,
       postClaimMessages:postClaimMessages};
@@ -483,6 +526,8 @@
         all.set(Number(idm[1]), {id:Number(idm[1]), message:content.innerHTML,
           user_id:userId, username:uname ? uname.textContent : ''});
       });
+      progressTo(8 + 10 * Math.min(all.size, expected) / expected,
+        'Проверяю страницы старого банка: ' + all.size + ' из ' + expected);
       if (all.size >= expected) break;
       stagnant = all.size === before ? stagnant + 1 : 0;
       if (stagnant >= 2) break;
@@ -505,6 +550,8 @@
           user_id: userId, group_by: 'topic_id', fields: 'id,topic_id,user_id',
           sort_by: 'id', sort_dir: 'desc', skip: skip, limit: CFG.groupedPageSize
         }));
+        progressTo(70 + 5 * Math.min(skip + page.length, CFG.groupedMaxSkip + CFG.groupedPageSize) /
+          (CFG.groupedMaxSkip + CFG.groupedPageSize), 'Поиск игровых эпизодов игрока…');
         var ids = page.map(function (p) { return Number(p.topic_id); });
         // При игнорировании group_by могут повторяться темы. Не доверяем
         // такому ответу — переключаемся на полный обход игровых разделов.
@@ -555,6 +602,8 @@
           forum_id: forumId, fields: 'id,forum_id', sort_by: 'id',
           sort_dir: 'desc', skip: skip, limit: CFG.topicPageSize
         }));
+        progressTo(75 + 5 * (f + Math.min(skip + page.length, CFG.topicMaxSkip + CFG.topicPageSize) /
+          (CFG.topicMaxSkip + CFG.topicPageSize)) / forums.length, 'Поиск игровых разделов…');
         for (var i = 0; i < page.length; i++) {
           var t = page[i];
           var tid = Number(t.id);
@@ -577,6 +626,7 @@
       show('Группировка API недоступна или неполная. Перехожу к полному обходу игровых разделов…');
       topics = await allGameTopics();
     }
+    progressTo(80, 'Список игровых эпизодов получен');
     var found = new Map();
     var tooLong = [];
     for (var index = 0; index < topics.length; index++) {
@@ -611,6 +661,8 @@
       }
       // Очень длинный отдельный эпизод нельзя молча обрезать.
       if (!complete) tooLong.push(tid);
+      progressTo(80 + 10 * (index + 1) / Math.max(topics.length, 1),
+        'Проверяю игровые эпизоды: ' + (index + 1) + ' из ' + topics.length);
       await sleep(CFG.delayMs);
     }
     if (tooLong.length) {
@@ -621,6 +673,7 @@
     if (knownGamePosts.some(function (p) { return !found.has(Number(p.id)); })) {
       throw new Error('Полный обход не совпал с исходной выборкой: найденные ранее игровые посты отсутствуют. Проверь доступность разделов и API.');
     }
+    progressTo(90, 'Игровые посты найдены');
     return Array.from(found.values()).sort(function (a, b) {
       return Number(b.posted) - Number(a.posted) || Number(b.id) - Number(a.id);
     });
@@ -644,7 +697,12 @@
         if (!Object.prototype.hasOwnProperty.call(CFG.gameForums, Number(post.forum_id))) continue;
         result.push(post);
       }
-      if (reachedStart || posts.length < CFG.pageSize) return result;
+      progressTo(65 + 5 * Math.min(skip + posts.length, CFG.maxSkip + CFG.pageSize) /
+        (CFG.maxSkip + CFG.pageSize), 'Поиск игровых постов игрока…');
+      if (reachedStart || posts.length < CFG.pageSize) {
+        progressTo(90, 'Игровые посты найдены');
+        return result;
+      }
       await sleep(CFG.delayMs);
     }
     // Прежняя версия здесь останавливалась с сообщением «лимит 1100».
@@ -674,7 +732,11 @@
     var starters = new Set();
     var quick = new Set();
     var needsReview = [];
+    var checkedTopics = 0;
     for (var t of topics) {
+      progressTo(90 + 9 * checkedTopics / Math.max(topics.length, 1),
+        'Проверяю быстрые ответы и стартовые посты: ' + checkedTopics + ' из ' + topics.length);
+      checkedTopics++;
       var target = grouped.get(t);
       var known = info.get(t);
       if (!known) {
@@ -729,6 +791,7 @@
       }
       await sleep(CFG.delayMs);
     }
+    progressTo(99, 'Формирую расчёт и ссылки на посты…');
     return { starters: starters, quick: quick, needsReview: needsReview };
   }
 
@@ -774,10 +837,10 @@
     state.suspicious = history.suspicious;
     state.claimDetails = history.claimDetails;
     state.historyCount = history.historyCount;
-    state.priorClaims = getPriorClaims(history, userId, rows);
+    state.priorClaims = getPriorClaims(history, userId);
     state.full = true;
     var total = newRows.reduce(function (acc, p) { return acc + p.sum; }, 0);
-    var html = renderPriorClaims(state.priorClaims, userId);
+    var html = renderPriorClaims(state.priorClaims);
     html += '<section class="ssbc-oldclaims" aria-label="Новые посты"><h4>Новые посты:</h4>';
     html += '<div class="ssbc-summary"><b>Новых постов: ' + newRows.length + '</b><br>' +
       '<b>К начислению: +' + money(total) + ' галлеонов</b>' +
@@ -829,8 +892,7 @@
       '', '[b]Ваши предыдущие заявки на посты:[/b]'];
     if (state.priorClaims.length) {
       state.priorClaims.forEach(function (entry) {
-        lines.push('[url=' + location.origin + link(entry.id) + ']Заявка #' + entry.id + '[/url]' +
-          (Number(entry.userId) !== userId ? ' (с другого профиля)' : ''));
+        lines.push('[url=' + location.origin + link(entry.id) + ']Заявка #' + entry.id + '[/url]');
       });
     } else {
       lines.push('Предыдущих заявок не найдено.');
@@ -890,6 +952,7 @@
     state.priorClaims = [];
     $('#ssbc-actions').hidden = true;
     $('#ssbc-result').innerHTML = '';
+    progressStart();
     try {
       var since = selectedDate();
       var fast = true; // Автоматически проверяем ответы ≤24 часов в разрешённых разделах.
@@ -904,7 +967,9 @@
       });
       var context = await topicContext(candidates, fast);
       newResult(posts, context, history);
+      progressDone();
     } catch (error) {
+      progressFailed();
       show('Расчёт не выполнен: ' + error.message, 'error');
       $('#ssbc-actions').hidden = true;
     } finally { btn.disabled = false; }
@@ -912,6 +977,7 @@
 
   $('#ssbc-period').addEventListener('change', function () {
     $('#ssbc-custom').hidden = this.value !== 'custom';
+    progressReset();
   });
   $('#ssbc-scan').addEventListener('click', calculate);
   $('#ssbc-copy').addEventListener('click', function () {
@@ -941,6 +1007,7 @@
     state.priorClaims = [];
     $('#ssbc-actions').hidden = true;
     $('#ssbc-result').innerHTML = '';
+    progressReset();
     show('Выберите игрока и период', 'idle');
   });
   $('#ssbc-balance').addEventListener('input', buildBBCode);
