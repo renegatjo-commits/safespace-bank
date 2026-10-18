@@ -1,7 +1,7 @@
 // Safe Space / Gringotts — внешний файл для HTML-низа
 // Встроенный интерфейс доступен только администратору в теме /viewtopic.php?id=1364.
 
-/* Safe Space / Gringotts: закрытый сборщик заявок v2.13 (предыдущие заявки и новые посты только выбранного профиля).
+/* Safe Space / Gringotts: закрытый сборщик заявок v2.14 (предыдущие заявки и новые посты только выбранного профиля).
  * Показывается только на safespace.rusff.me/viewtopic.php?id=1364,
  * только авторизованным администраторам форума (GroupID===1).
  * Использует тарифы по действующим правилам банка, а историю заявок
@@ -32,7 +32,7 @@
   if (!document.getElementById('ssbc-external-styles')) {
     var bankStyle = document.createElement('style');
     bankStyle.id = 'ssbc-external-styles';
-    bankStyle.textContent = "/* Дизайн согласован с темой банка Гринготтс */\n\n.ssbc-wrap { box-sizing: border-box; width: 94%; max-width: 900px; margin: 24px auto;\n  background: #f4f0e8; border: 1px solid #d8d0c5; border-radius: 12px;\n  padding: 19px; font-family: Arial, sans-serif; color: #403a43; }\n.ssbc-wrap .ssbc-headline { font-family: Georgia, serif; font-weight: normal; text-align:center; font-size: 19px; color: #4b3b59; margin: 0 0 6px; }\n.ssbc-wrap .ssbc-intro { color: #766f77; font-size: 12px; line-height: 1.65; text-align: center; margin: 0 0 17px; }\n.ssbc-wrap .ssbc-fields { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-bottom: 14px; }\n.ssbc-wrap .ssbc-fields label { flex: 1 1 175px; display:flex; flex-direction:column; gap:6px; font-size:12px; color:#51415e; }\n.ssbc-wrap .ssbc-fields select, .ssbc-wrap .ssbc-fields input { font: 13px Arial, sans-serif; color:#403a43; border-radius:8px; border:1px solid #cbc0d1; box-sizing:border-box; padding:9px; width:100%; background:#fff; }\n.ssbc-wrap .ssbc-check { display:block; font-size:12px; color:#625a66; line-height:1.5; margin:10px 0 15px; }\n.ssbc-wrap .ssbc-check input, .ssbc-wrap .ssbc-confirm input, .ssbc-wrap .ssbc-row input { vertical-align:middle; accent-color:#695485; }\n.ssbc-wrap .ssbc-button { display:inline-block; border:0; border-radius:8px; padding:11px 17px; font: 12px Arial, sans-serif; cursor:pointer; background:#5f4c75; color:#fff; transition: .2s; }\n.ssbc-wrap .ssbc-button:hover { background: #48345e; }\n.ssbc-wrap .ssbc-button:disabled { opacity:.48; cursor:default; }\n.ssbc-wrap .ssbc-button-light { background:#e4dce9; color:#45394f; }\n.ssbc-wrap .ssbc-button-light:hover { background:#d4c5dd; }\n.ssbc-wrap .ssbc-status { margin:14px 0; border-left:3px solid #a98e61; padding:10px 12px; background:#ece8e2; font-size:12px; line-height:1.5; }\n.ssbc-wrap .ssbc-status.ok { border-color:#678269; background:#e3e9e1; }\n.ssbc-wrap .ssbc-status.error, .ssbc-wrap .ssbc-alert { border-color:#ad665f; background:#f3e4e0; }\n.ssbc-wrap .ssbc-summary { background:#e6ddeb; border-radius:9px; padding:14px; line-height:1.75; text-align:center; margin-top:16px; font-size:13px; color:#453354; }\n.ssbc-wrap .ssbc-small { font-size:11px; line-height:1.5; color:#756e79; }\n.ssbc-wrap .ssbc-alert { border-left:3px solid #ad665f; padding:12px; margin:12px 0; font-size:11px; line-height:1.7; border-radius:4px; }\n.ssbc-wrap .ssbc-alert details { margin-top:6px; max-height:180px; overflow:auto; }\n.ssbc-wrap .ssbc-alert summary { cursor:pointer; }\n.ssbc-wrap .ssbc-rows { max-height:360px; overflow:auto; margin:10px 0 15px; }\n.ssbc-wrap .ssbc-row { display:flex; align-items:center; justify-content:space-between; gap:10px; border-bottom:1px solid #ded6ce; padding:9px 4px; font-size:12px; }\n.ssbc-wrap .ssbc-row label { min-width:0; line-height:1.5; }\n.ssbc-wrap .ssbc-row small { color:#817886; font-size:10px; }\n.ssbc-wrap .ssbc-row b { white-space:nowrap; color:#5a466b; }\n.ssbc-wrap .ssbc-confirm { display:block; padding:12px; font-size:12px; line-height:1.5; background:#f3e4e0; border-radius:8px; margin:8px 0 15px; }\n.ssbc-wrap .ssbc-actions { display:flex; gap:9px; align-items:center; flex-wrap:wrap; margin:12px 0; }\n.ssbc-wrap .ssbc-actions[hidden], .ssbc-wrap #ssbc-custom[hidden] { display:none!important; }\n.ssbc-wrap #ssbc-text { width:100%; min-height:175px; resize:vertical; box-sizing:border-box; border:1px solid #cbc0d1; padding:12px; border-radius:8px; font:12px/1.5 Consolas,monospace; color:#3b3440; background:white; }\n.ssbc-wrap .ssbc-oldclaims { margin: 14px 0; padding: 13px; background: #faf8f4; border: 1px solid #d8d0c5; border-radius: 9px; }\n.ssbc-wrap .ssbc-oldclaims h4 { margin: 0 0 10px; font: normal 15px Georgia,serif; color:#4b3b59; }\n.ssbc-wrap .ssbc-oldclaims-list { max-height:300px; overflow-y:auto; overflow-wrap:anywhere; }\n.ssbc-wrap .ssbc-oldclaims-list .ssbc-claim-entry { padding:5px 3px; border-bottom:1px solid #e9e1d7; font-size:12px; line-height:1.5; }\n.ssbc-wrap .ssbc-oldclaims-list .ssbc-claim-entry:last-child { border-bottom:0; }\n.ssbc-wrap .ssbc-oldclaims-list a { color:#5f4c75; text-decoration: underline; }\n.ssbc-wrap #ssbc-progress[hidden] {display:none!important;}\n.ssbc-wrap #ssbc-progress {padding:12px 14px; margin:12px 0 15px; border:1px solid #d8d0c5; background:#faf8f4; border-radius:9px;}\n.ssbc-wrap .ssbc-progress-top {display:flex; justify-content:space-between; align-items:center; gap:14px; color:#51415e; font:12px/1.4 Arial,sans-serif; margin-bottom:8px;}\n.ssbc-wrap #ssbc-progress-pct {font-weight:700; color:#4b3b59; white-space:nowrap; font-variant-numeric:tabular-nums;}\n.ssbc-wrap #ssbc-progress-bar {display:block; width:100%;height:12px;border:0;border-radius:20px;overflow:hidden;background:#e4dce9;accent-color:#806a99;}\n.ssbc-wrap #ssbc-progress-bar::-webkit-progress-bar {background:#e4dce9;border-radius:20px;}\n.ssbc-wrap #ssbc-progress-bar::-webkit-progress-value {background:linear-gradient(90deg,#806a99,#5f4c75);border-radius:20px;transition:width .22s ease;}\n.ssbc-wrap #ssbc-progress-bar::-moz-progress-bar {background:#806a99;border-radius:20px;}\n.ssbc-wrap #ssbc-progress[data-state='error'] {border-color:#ad665f;}\n.ssbc-wrap #ssbc-progress[data-state='done'] {border-color:#678269;}\n.ssbc-wrap .ssbc-type-row {display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin:8px 0;}\n.ssbc-wrap .ssbc-type-row select {font:12px Arial,sans-serif; padding:7px; border:1px solid #cbc0d1; background:#fff; border-radius:7px; max-width:270px;}\n.ssbc-wrap .ssbc-type-row a {color:#5f4c75; text-decoration:underline;}\n\n@media(max-width:650px){.ssbc-wrap {width:100%;padding:12px;} .ssbc-wrap .ssbc-headline{font-size:16px;} .ssbc-wrap .ssbc-row{flex-wrap:wrap;} .ssbc-wrap .ssbc-fields{gap:9px;} .ssbc-wrap .ssbc-button{padding:10px 11px;} }";
+    bankStyle.textContent = "/* Дизайн согласован с темой банка Гринготтс */\n\n.ssbc-wrap { box-sizing: border-box; width: 94%; max-width: 900px; margin: 24px auto;\n  background: #f4f0e8; border: 1px solid #d8d0c5; border-radius: 12px;\n  padding: 19px; font-family: Arial, sans-serif; color: #403a43; }\n.ssbc-wrap .ssbc-headline { font-family: Georgia, serif; font-weight: normal; text-align:center; font-size: 19px; color: #4b3b59; margin: 0 0 6px; }\n.ssbc-wrap .ssbc-intro { color: #766f77; font-size: 12px; line-height: 1.65; text-align: center; margin: 0 0 17px; }\n.ssbc-wrap .ssbc-fields { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-bottom: 14px; }\n.ssbc-wrap .ssbc-fields label { flex: 1 1 175px; display:flex; flex-direction:column; gap:6px; font-size:12px; color:#51415e; }\n.ssbc-wrap .ssbc-fields select, .ssbc-wrap .ssbc-fields input { font: 13px Arial, sans-serif; color:#403a43; border-radius:8px; border:1px solid #cbc0d1; box-sizing:border-box; padding:9px; width:100%; background:#fff; }\n.ssbc-wrap .ssbc-check { display:block; font-size:12px; color:#625a66; line-height:1.5; margin:10px 0 15px; }\n.ssbc-wrap .ssbc-check input, .ssbc-wrap .ssbc-confirm input, .ssbc-wrap .ssbc-row input { vertical-align:middle; accent-color:#695485; }\n.ssbc-wrap .ssbc-button { display:inline-block; border:0; border-radius:8px; padding:11px 17px; font: 12px Arial, sans-serif; cursor:pointer; background:#5f4c75; color:#fff; transition: .2s; }\n.ssbc-wrap .ssbc-button:hover { background: #48345e; }\n.ssbc-wrap .ssbc-button:disabled { opacity:.48; cursor:default; }\n.ssbc-wrap .ssbc-button-light { background:#e4dce9; color:#45394f; }\n.ssbc-wrap .ssbc-button-light:hover { background:#d4c5dd; }\n.ssbc-wrap .ssbc-status { margin:14px 0; border-left:3px solid #a98e61; padding:10px 12px; background:#ece8e2; font-size:12px; line-height:1.5; }\n.ssbc-wrap .ssbc-status.ok { border-color:#678269; background:#e3e9e1; }\n.ssbc-wrap .ssbc-status.error, .ssbc-wrap .ssbc-alert { border-color:#ad665f; background:#f3e4e0; }\n.ssbc-wrap .ssbc-summary { background:#e6ddeb; border-radius:9px; padding:14px; line-height:1.75; text-align:center; margin-top:16px; font-size:13px; color:#453354; }\n.ssbc-wrap .ssbc-small { font-size:11px; line-height:1.5; color:#756e79; }\n.ssbc-wrap .ssbc-alert { border-left:3px solid #ad665f; padding:12px; margin:12px 0; font-size:11px; line-height:1.7; border-radius:4px; }\n.ssbc-wrap .ssbc-alert details { margin-top:6px; max-height:180px; overflow:auto; }\n.ssbc-wrap .ssbc-alert summary { cursor:pointer; }\n.ssbc-wrap .ssbc-rows { max-height:360px; overflow:auto; margin:10px 0 15px; }\n.ssbc-wrap .ssbc-row { display:flex; align-items:center; justify-content:space-between; gap:10px; border-bottom:1px solid #ded6ce; padding:9px 4px; font-size:12px; }\n.ssbc-wrap .ssbc-row label { min-width:0; line-height:1.5; }\n.ssbc-wrap .ssbc-row small { color:#817886; font-size:10px; }\n.ssbc-wrap .ssbc-row b { white-space:nowrap; color:#5a466b; }\n.ssbc-wrap .ssbc-confirm { display:block; padding:12px; font-size:12px; line-height:1.5; background:#f3e4e0; border-radius:8px; margin:8px 0 15px; }\n.ssbc-wrap .ssbc-actions { display:flex; gap:9px; align-items:center; flex-wrap:wrap; margin:12px 0; }\n.ssbc-wrap .ssbc-actions[hidden], .ssbc-wrap #ssbc-custom[hidden] { display:none!important; }\n.ssbc-wrap #ssbc-text { width:100%; min-height:175px; resize:vertical; box-sizing:border-box; border:1px solid #cbc0d1; padding:12px; border-radius:8px; font:12px/1.5 Consolas,monospace; color:#3b3440; background:white; }\n.ssbc-wrap .ssbc-oldclaims { margin: 14px 0; padding: 13px; background: #faf8f4; border: 1px solid #d8d0c5; border-radius: 9px; }\n.ssbc-wrap .ssbc-oldclaims h4 { margin: 0 0 10px; font: normal 15px Georgia,serif; color:#4b3b59; }\n.ssbc-wrap .ssbc-oldclaims-list { max-height:300px; overflow-y:auto; overflow-wrap:anywhere; }\n.ssbc-wrap .ssbc-oldclaims-list .ssbc-claim-entry { padding:5px 3px; border-bottom:1px solid #e9e1d7; font-size:12px; line-height:1.5; }\n.ssbc-wrap .ssbc-oldclaims-list .ssbc-claim-entry:last-child { border-bottom:0; }\n.ssbc-wrap .ssbc-oldclaims-list a { color:#5f4c75; text-decoration: underline; }\n.ssbc-wrap #ssbc-progress[hidden] {display:none!important;}\n.ssbc-wrap #ssbc-progress {padding:12px 14px; margin:12px 0 15px; border:1px solid #d8d0c5; background:#faf8f4; border-radius:9px;}\n.ssbc-wrap .ssbc-progress-top {display:flex; justify-content:space-between; align-items:center; gap:14px; color:#51415e; font:12px/1.4 Arial,sans-serif; margin-bottom:8px;}\n.ssbc-wrap #ssbc-progress-pct {font-weight:700; color:#4b3b59; white-space:nowrap; font-variant-numeric:tabular-nums;}\n.ssbc-wrap #ssbc-progress-bar {display:block; width:100%;height:12px;border:0;border-radius:20px;overflow:hidden;background:#e4dce9;accent-color:#806a99;}\n.ssbc-wrap #ssbc-progress-bar::-webkit-progress-bar {background:#e4dce9;border-radius:20px;}\n.ssbc-wrap #ssbc-progress-bar::-webkit-progress-value {background:linear-gradient(90deg,#806a99,#5f4c75);border-radius:20px;transition:width .22s ease;}\n.ssbc-wrap #ssbc-progress-bar::-moz-progress-bar {background:#806a99;border-radius:20px;}\n.ssbc-wrap #ssbc-progress[data-state='error'] {border-color:#ad665f;}\n.ssbc-wrap #ssbc-progress[data-state='done'] {border-color:#678269;}\n\n@media(max-width:650px){.ssbc-wrap {width:100%;padding:12px;} .ssbc-wrap .ssbc-headline{font-size:16px;} .ssbc-wrap .ssbc-row{flex-wrap:wrap;} .ssbc-wrap .ssbc-fields{gap:9px;} .ssbc-wrap .ssbc-button{padding:10px 11px;} }";
     document.head.appendChild(bankStyle);
   }
   // У Rusff оформление темы может менять вложенность .post и .topicpost.
@@ -96,8 +96,8 @@
   var CFG = {
     bankTopics: [20], // Единственный источник заявленных/оплаченных постов: действующий банк №20
     minChars: 1000,
-    gameForums: {5: 30, 8: 30, 9: 10, 17: 30, 18: 30, 19: 10, 22: 30}, // 22: незавершённые, тариф выбирается отдельно по теме
-    fastForums: new Set([8, 9, 18, 19, 22]), // f22 проверяется на быстрый ответ, бонус выдаётся лишь при ручной классификации темы как личной/альта
+    gameForums: {5: 30, 8: 30, 9: 10, 17: 30, 18: 30, 19: 10, 22: 30}, // f22: незавершённые считаются как личные эпизоды (+30)
+    fastForums: new Set([8, 9, 18, 19, 22]), // f22: автоматический бонус +10 как для личных эпизодов
     fastExcludedTopics: new Set([687, 418]), // именно темы (не разделы); за посты платим, бонус +10 не даём
     fastBonus: 10,
     pageSize: 100,
@@ -825,15 +825,13 @@
       var len = charCount(p.message);
       if (len < CFG.minChars) { tooShort.push(p); return; }
       if (history.used.has(id)) { usedRows.push(p); return; }
-      var unfinished = Number(p.forum_id) === 22;
+      // f22 (незавершённые) рассчитывается без ручного выбора, как личные эпизоды:
+      // 30 за подходящий пост и 10 за быстрый ответ, кроме тем №687 и №418.
       var mayBeFast = !CFG.fastExcludedTopics.has(Number(p.topic_id)) && ctx.quick.has(id);
-      // f22 объединяет незавершённые эпизоды разных видов.
-      // Нельзя без оснований назначать им ни +30, ни +10, ни суточный бонус.
-      var base = unfinished ? 0 : CFG.gameForums[Number(p.forum_id)];
-      var fast = !unfinished && CFG.fastForums.has(Number(p.forum_id)) && mayBeFast ? CFG.fastBonus : 0;
+      var base = CFG.gameForums[Number(p.forum_id)];
+      var fast = CFG.fastForums.has(Number(p.forum_id)) && mayBeFast ? CFG.fastBonus : 0;
       newRows.push({id: id, posted: p.posted, length: len, forum: Number(p.forum_id),
-        topic: Number(p.topic_id), type: unfinished ? 'unknown' : 'normal',
-        mayBeFast: mayBeFast, base: base, fast: fast, sum: base + fast});
+        topic: Number(p.topic_id), base: base, fast: fast, sum: base + fast});
     });
     newRows.sort(function (a, z) { return Number(a.posted) - Number(z.posted); });
     state.rows = newRows;
@@ -857,30 +855,14 @@
         gameTopicsNeedingReview: ctx.needsReview.slice()
       });
     }
-    var unfinishedTopics = Array.from(new Set(newRows.filter(function (p) { return p.forum === 22; })
-      .map(function (p) { return p.topic; })));
-    if (unfinishedTopics.length) {
-      html += '<section class="ssbc-oldclaims"><h4>Незавершённые эпизоды</h4>' +
-        '<p class="ssbc-small">Посты из раздела №22 найдены. Укажите тип каждого эпизода: тариф и суточный бонус зависят от него.</p>';
-      unfinishedTopics.forEach(function (topicId) {
-        html += '<div class="ssbc-type-row"><a target="_blank" rel="noopener" href="/viewtopic.php?id=' + topicId + '">Эпизод №' + topicId + '</a>' +
-          '<select data-ssbc-topic-type="' + topicId + '" aria-label="Тип незавершённого эпизода №' + topicId + '">' +
-          '<option value="unknown">Выберите тип эпизода</option>' +
-          '<option value="plot">Сюжетный: +30, без быстрого бонуса</option>' +
-          '<option value="personal">Личный: +30, быстрый +10</option>' +
-          '<option value="alt">Альтернатива: +10, быстрый +10</option>' +
-          '</select></div>';
-      });
-      html += '</section>';
-    }
     html += '<div class="ssbc-rows">';
     newRows.forEach(function (p) {
       html += '<div class="ssbc-row"><label><input type="checkbox" data-post="' + p.id + '" checked>' +
         ' <a href="' + link(p.id) + '" target="_blank" rel="noopener">Пост #' + p.id + '</a>' +
         ' <small id="ssbc-kind-' + p.id + '">' + dateOf(p.posted) + ' · ' + p.length + ' симв. · ' +
-        (p.forum === 22 ? 'Незавершённый, выберите тип' : ([9, 19].includes(p.forum) ? 'Альтернатива' : 'Игра')) +
+        (p.forum === 22 ? 'Незавершённый эпизод' : ([9, 19].includes(p.forum) ? 'Альтернатива' : 'Игра')) +
         (p.fast ? ' · быстрый ответ' : '') + '</small></label><b id="ssbc-price-' + p.id + '">' +
-        (p.forum === 22 ? '—' : '+' + p.sum) + '</b></div>';
+        '+' + p.sum + '</b></div>';
     });
     if (!newRows.length) html += '<p>Новых подходящих постов за этот период нет.</p>';
     html += '</div></section>';
@@ -894,7 +876,7 @@
     $('#ssbc-result').innerHTML = html;
     $('#ssbc-actions').hidden = false;
     buildBBCode();
-    $('#ssbc-result').querySelectorAll('input[type="checkbox"], select[data-ssbc-topic-type]').forEach(function (input) {
+    $('#ssbc-result').querySelectorAll('input[type="checkbox"]').forEach(function (input) {
       input.addEventListener('change', buildBBCode);
     });
     show('Расчёт готов.', 'ok');
@@ -904,41 +886,13 @@
     if (!state.full) return '';
     var checked = Array.from($('#ssbc-result').querySelectorAll('input[data-post]:checked'))
       .map(function (x) { return Number(x.dataset.post); });
-    var typeByTopic = new Map();
-    $('#ssbc-result').querySelectorAll('select[data-ssbc-topic-type]').forEach(function (el) {
-      typeByTopic.set(Number(el.dataset.ssbcTopicType), el.value);
-    });
-    state.rows.forEach(function (r) {
-      if (r.forum !== 22) return;
-      r.type = typeByTopic.get(r.topic) || 'unknown';
-      r.base = r.type === 'alt' ? 10 : (r.type === 'unknown' ? 0 : 30);
-      r.fast = (r.type === 'alt' || r.type === 'personal') && r.mayBeFast ? CFG.fastBonus : 0;
-      r.sum = r.base + r.fast;
-      var price = $('#ssbc-price-' + r.id);
-      var kind = $('#ssbc-kind-' + r.id);
-      if (price) price.textContent = r.type === 'unknown' ? '—' : ('+' + r.sum);
-      if (kind) kind.textContent = dateOf(r.posted) + ' · ' + r.length + ' симв. · ' +
-        ({unknown:'Незавершённый, выберите тип', plot:'Сюжетный',personal:'Личный',alt:'Альтернатива'}[r.type]) +
-        (r.fast ? ' · быстрый ответ' : '');
-    });
     var selected = state.rows.filter(function (r) { return checked.includes(r.id); });
     var game = selected.filter(function (r) { return r.base === 30; });
     var alt = selected.filter(function (r) { return r.base === 10; });
     var fast = selected.filter(function (r) { return r.fast; });
     var total = selected.reduce(function (n, row) { return n + row.sum; }, 0);
-    var unresolved = selected.filter(function (r) { return r.forum === 22 && r.type === 'unknown'; });
     var totalLabel = $('#ssbc-new-total');
-    if (totalLabel) totalLabel.textContent = unresolved.length
-      ? 'Выберите тип незавершённых эпизодов (' + unresolved.length + ' постов)' :
-      'К начислению: +' + money(total) + ' галлеонов';
-    if (unresolved.length) {
-      state.raw = '';
-      $('#ssbc-text').value = 'Укажите тип незавершённых эпизодов или снимите с их постов галочки.';
-      $('#ssbc-copy').disabled = true;
-      $('#ssbc-insert').disabled = true;
-      $('#ssbc-selected-total').textContent = 'Требуется выбрать тип незавершённых эпизодов';
-      return '';
-    }
+    if (totalLabel) totalLabel.textContent = 'К начислению: +' + money(total) + ' галлеонов';
     var lines = ['[b]Профиль:[/b] [url=' + location.origin + '/profile.php?id=' + userId + ']' +
       userName.replace(/[\[\]]/g, '') + '[/url] (ID ' + userId + ')',
       '', '[b]Ваши предыдущие заявки на посты:[/b]'];
