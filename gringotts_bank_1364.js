@@ -1,7 +1,7 @@
 // Safe Space / Gringotts — внешний файл для HTML-низа
 // Встроенный интерфейс доступен только администратору в теме /viewtopic.php?id=1364.
 
-/* Safe Space / Gringotts: закрытый сборщик заявок v2.14 (предыдущие заявки и новые посты только выбранного профиля).
+/* Safe Space / Gringotts: закрытый сборщик заявок v2.15 (предыдущие заявки и новые посты только выбранного профиля).
  * Показывается только на safespace.rusff.me/viewtopic.php?id=1364,
  * только авторизованным администраторам форума (GroupID===1).
  * Использует тарифы по действующим правилам банка, а историю заявок
@@ -749,7 +749,8 @@
       if (firstId) starters.add(firstId);
       // Для сюжетных эпизодов суточный бонус не предусмотрен (включая архив f17).
       var canFast = fastEnabled && !CFG.fastExcludedTopics.has(t) && target.some(function (p) {
-        return CFG.fastForums.has(Number(p.forum_id));
+        // Короткие посты не получают суточный бонус и не требуют проверки времени ответа.
+        return CFG.fastForums.has(Number(p.forum_id)) && charCount(p.message) >= CFG.minChars;
       });
       if (!canFast && firstId) continue;
       // Чтобы проверить быстрый ответ, нужны соседние сообщения из этой темы.
@@ -822,9 +823,10 @@
     rows.forEach(function (p) {
       var id = Number(p.id);
       if (ctx.starters.has(id)) return;
+      // Учитываем только новые сообщения: заявленные ранее не попадают и в счётчик коротких.
+      if (history.used.has(id)) { usedRows.push(p); return; }
       var len = charCount(p.message);
       if (len < CFG.minChars) { tooShort.push(p); return; }
-      if (history.used.has(id)) { usedRows.push(p); return; }
       // f22 (незавершённые) рассчитывается без ручного выбора, как личные эпизоды:
       // 30 за подходящий пост и 10 за быстрый ответ, кроме тем №687 и №418.
       var mayBeFast = !CFG.fastExcludedTopics.has(Number(p.topic_id)) && ctx.quick.has(id);
@@ -845,6 +847,7 @@
     var html = renderPriorClaims(state.priorClaims);
     html += '<section class="ssbc-oldclaims" aria-label="Новые посты"><h4>Новые посты:</h4>';
     html += '<div class="ssbc-summary"><b>Новых постов: ' + newRows.length + '</b><br>' +
+      '<span class="ssbc-small">Постов меньше 1000 символов: ' + tooShort.length + ' (не оплачиваются)</span><br>' +
       '<b id="ssbc-new-total">К начислению: +' + money(total) + ' галлеонов</b>' +
       '<div id="ssbc-balance-preview" class="ssbc-small"></div></div>';
     // Техническая статистика, перечень уже использованных ссылок и диагностика
@@ -967,9 +970,10 @@
       state.claimDetails = history.claimDetails;
       var posts = await userPosts(since);
       if (posts.length && posts[0].username) userName = b(posts[0].username);
-      // Не запрашиваем историю эпизодов ради уже оплаченных или коротких постов.
+      // Для точного подсчёта коротких сообщений нужно также определить стартовые
+      // посты эпизодов; поэтому проверяем контекст всех ещё не заявленных постов.
       var candidates = posts.filter(function (p) {
-        return !history.used.has(Number(p.id)) && charCount(p.message) >= CFG.minChars;
+        return !history.used.has(Number(p.id));
       });
       var context = await topicContext(candidates, fast);
       newResult(posts, context, history);
