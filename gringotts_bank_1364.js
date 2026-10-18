@@ -1,11 +1,13 @@
 // Safe Space / Gringotts — внешний файл для HTML-низа
 // Встроенный интерфейс доступен только администратору в теме /viewtopic.php?id=1364.
 
-/* Safe Space / Gringotts: закрытый сборщик заявок v2.2 (без общего лимита 1100 сообщений).
+/* Safe Space / Gringotts: закрытый сборщик заявок v2.3 (без общего лимита 1100 сообщений).
  * Показывается только на safespace.rusff.me/viewtopic.php?id=1364,
  * только авторизованным администраторам форума (GroupID===1).
  * Использует тарифы по действующим правилам банка, а историю заявок
  * читает старые заявки ТОЛЬКО из действующей банковской темы №20.
+ * Старые заявки: URL id=ТЕМА#pПОСТ, pid=ПОСТ#pПОСТ и BBCode нормализуются по ID.
+ * Не удаляем [code]/спойлеры при чтении старых заявок.
  * Исключение суточного бонуса +10: темы №687 и №418 (основная оплата сохраняется).
  * НИЧЕГО не начисляет/не списывает/не публикует автоматически.
  * ВАЖНО: реальную приватность темы задают ПРАВА ДОСТУПА Rusff,
@@ -145,19 +147,43 @@
     return [];
   }
 
-  // Из URL с разными схемами Rusff извлекаем ОДИН ID сообщения.
-  // Ссылки на другие сайты не считаются доказательствами.
+  // У заявок встречаются ссылки с id=ТЕМА#pПОСТ и pid=ПОСТ#pПОСТ.
+  // Сравниваем всегда ID ПОСТА, а не полный адрес или id темы.
+  // HTML-entities, экранирование слешей и BBCode допускаются.
+  function decodeLinkMarkup(value) {
+    var raw = b(value);
+    for (var turn = 0; turn < 3; turn++) {
+      var textarea = document.createElement('textarea');
+      textarea.innerHTML = raw;
+      var decoded = textarea.value;
+      if (decoded === raw) break;
+      raw = decoded;
+    }
+    return raw.replace(/\\([:/?#=&])/g, '$1')
+      .replace(/[\u200b-\u200d\ufeff]/g, '')
+      .replace(/\u00a0/g, ' ');
+  }
+
   function postIdFromLink(href) {
     try {
-      var u = new URL(href, location.origin);
-      if (u.hostname.replace(/^www\./, '') !== location.hostname.replace(/^www\./, '')) return null;
+      var clean = decodeLinkMarkup(href).trim()
+        .replace(/^[\s'\"(<\[]+/, '')
+        .replace(/[\s'\"\])>,.;!]+$/, '');
+      // Старые [url=...] могли сохраниться буквально как BBCode.
+      var bbUrl = clean.match(/^\[?url\s*=\s*([^\]\s]+)\]?/i);
+      if (bbUrl) clean = bbUrl[1];
+      var u = new URL(clean, location.origin);
+      if (u.hostname.replace(/^www\./, '').toLowerCase() !== 'safespace.rusff.me') return null;
       if (!/\/(?:viewtopic\.php|post\.php)$/i.test(u.pathname)) return null;
-      var pid = u.searchParams.get('pid');
-      var hash = u.hash.match(/^#p(\d+)$/i);
-      var id = pid && /^\d+$/.test(pid) ? Number(pid) : hash ? Number(hash[1]) : null;
-      if (!id || !Number.isSafeInteger(id)) return null;
       if (CFG.bankTopics.includes(Number(u.searchParams.get('id')))) return null;
-      return id;
+      var hash = u.hash.match(/^#p(\d+)$/i);
+      var pid = u.searchParams.get('pid');
+      var hashId = hash ? Number(hash[1]) : 0;
+      var queryId = pid && /^\d+$/.test(pid) ? Number(pid) : 0;
+      // При противоречивых pid и #p ссылку нельзя считать доказательством.
+      if (hashId && queryId && hashId !== queryId) return null;
+      var id = hashId || queryId;
+      return Number.isSafeInteger(id) && id > 0 ? id : null;
     } catch (e) { return null; }
   }
 
@@ -175,22 +201,39 @@
   function claimData(html) {
     var doc = new DOMParser().parseFromString('<div id="ssbc-claim">' + b(html) + '</div>', 'text/html');
     var el = doc.getElementById('ssbc-claim');
-    el.querySelectorAll('blockquote, .quote-box, .code-box, code, pre, script, style, .spoiler').forEach(function (x) { x.remove(); });
+    // Убираем чужие цитаты, но НЕ удаляем [code], pre и спойлеры:
+    // реальные старые заявки часто хранят подтверждающие ссылки именно в них.
+    el.querySelectorAll('blockquote, .quote-box, script, style').forEach(function (x) { x.remove(); });
     var ids = new Set();
     el.querySelectorAll('a[href]').forEach(function (a) {
       var id = postIdFromLink(a.getAttribute('href'));
       if (id) ids.add(id);
     });
-    // Также поддерживаем URL, написанные простым текстом или в [url=...].
-    var raw = el.innerHTML + '\n' + el.textContent;
-    var matches = raw.match(/(?:https?:\/\/safespace\.rusff\.me)?\/?viewtopic\.php\?[^\s"'<>\[\]]+/gi) || [];
-    matches.forEach(function (m) {
-      var clean = m.replace(/&amp;/g, '&').replace(/[),.;]+$/, '');
-      var id = postIdFromLink(clean);
-      if (id) ids.add(id);
+    // Ссылки встречаются как HTML, обычный текст, [url=...],
+    // а иногда HTML из API экранирован: &lt;a href=&quot;...&quot;&gt;.
+    var sources = [el.innerHTML, el.textContent];
+    var seenRaw = new Set();
+    sources.forEach(function (source) {
+      var raw = decodeLinkMarkup(source);
+      if (seenRaw.has(raw)) return;
+      seenRaw.add(raw);
+      // Абсолютные URL. Сначала извлекаем их целиком: ссылка на сторонний
+      // сайт НЕ должна определиться по хвосту /viewtopic.php.
+      var urls = raw.match(/(?:https?:\/\/|\/\/)[^\s\"'<>\[\]`]+/gi) || [];
+      urls.forEach(function (url) {
+        var id = postIdFromLink(url);
+        if (id) ids.add(id);
+      });
+      // Относительные ссылки, например [url=viewtopic.php?pid=23990].
+      var relative = /(?:^|[\s\"'=\[(])\/?(viewtopic\.php\?[^\s\"'<>\[\]`]+)/gim;
+      var match;
+      while ((match = relative.exec(raw))) {
+        var relativeId = postIdFromLink(match[1]);
+        if (relativeId) ids.add(relativeId);
+      }
     });
     var text = el.textContent.replace(/\s+/g, ' ');
-    // Старые заявки с количеством постов, но без ссылок, НЕ МОЖЕМ безопасно сопоставить с ID.
+    // Заявки без прямых ссылок требуют ручной сверки.
     var uncertain = !ids.size && /(?:пост(?:ы|ов|а|ам|ами)?|альт(?:ернатив|ы)?|быстр(?:ый|ые|ого)\s+ответ|постописец)/i.test(text)
       && /(?:за что|сколько|зачисл|начисл|\+\s*\d|итогов|галлеон|\d+\s*(?:пост|шт))/i.test(text);
     return { ids: ids, uncertain: uncertain };
@@ -575,10 +618,9 @@
     state.historyCount = history.historyCount;
     state.full = true;
     var total = newRows.reduce(function (acc, p) { return acc + p.sum; }, 0);
-    var name = escapeHtml(userName);
     var html = '<div class="ssbc-summary"><b>' + newRows.length + '</b> новых · <b>' + usedRows.length +
       '</b> уже заявлены · <b>' + tooShort.length + '</b> короче 1000 символов<br><b>Итого: +' + money(total) + ' галлеонов</b></div>';
-    html += '<p class="ssbc-small">Проверено ' + history.historyCount + ' сообщений темы №20. Посты из заявок любого игрока исключены по ID.</p>';
+    html += '<p class="ssbc-small">Проверено ' + history.historyCount + ' сообщений темы №20. Найдено ' + history.used.size + ' уникальных ID постов в старых заявках. Посты из заявок любого игрока исключены по ID.</p>';
     if (usedRows.length) {
       html += '<details class="ssbc-small"><summary style="cursor:pointer">Показать уже заявленные посты (' +
         usedRows.length + ')</summary><div style="padding:7px 10px">' +
