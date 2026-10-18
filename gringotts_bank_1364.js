@@ -1,48 +1,53 @@
 // Safe Space / Gringotts — внешний файл для HTML-низа
-// Встроенный интерфейс доступен только администратору в теме /viewtopic.php?id=1364.
+// Банковский калькулятор в конце первого сообщения темы №20.
 
-/* Safe Space / Gringotts: закрытый сборщик заявок v2.15 (предыдущие заявки и новые посты только выбранного профиля).
- * Показывается только на safespace.rusff.me/viewtopic.php?id=1364,
- * только авторизованным администраторам форума (GroupID===1).
+/* Safe Space / Gringotts: калькулятор заявок v2.16 (публичный банк №20).
+ * Показывается зарегистрированным игрокам в конце первого сообщения темы №20.
+ * Администраторы выполняют строгую сверку исходных BBCode всех заявок.
+ * Игроки получают предварительный расчёт по общедоступным API и HTML;
+ * итоговый BBCode должен быть утверждён АМС до начисления.
  * Использует тарифы по действующим правилам банка, а историю заявок
  * читает старые заявки ТОЛЬКО из действующей банковской темы №20.
  * Старые заявки: URL id=ТЕМА#pПОСТ, pid=ПОСТ#pПОСТ и BBCode нормализуются по ID.
  * Сопоставляем API + HTML + ИСХОДНЫЙ BBCODE через GET edit.php?id=ID для ВСЕХ ответов банка №20.
- * Если исходник хотя бы одной заявки прочитать нельзя, НЕ выдаём неполный расчёт.
+ * В строгом режиме АМС: если исходник заявки недоступен, расчёт останавливается.
+ * Для игроков доступ к чужим edit.php не требуется (история из API/HTML).
  * Не удаляем [code]/спойлеры/цитаты при чтении старых заявок.
  * Исключение суточного бонуса +10: темы №687 и №418 (основная оплата сохраняется).
  * НИЧЕГО не начисляет/не списывает/не публикует автоматически.
- * ВАЖНО: реальную приватность темы задают ПРАВА ДОСТУПА Rusff,
- * не эта проверка в JS. Публичный HTML-низ доступен для просмотра кода.
+ * Не является платёжным инструментом и не меняет поле галлеонов.
  */
 (function () {
   'use strict';
   function mountBank() {
   // На Rusff [html] в сообщениях находится в iframe; основной сборщик — в HTML-низе.
-  // Проверяем адрес и права АМС ПОСЛЕ формирования DOM.
+  // Отображение только в первом сообщении публичного банка, после загрузки DOM.
   if (location.hostname.replace(/^www\./, '') !== 'safespace.rusff.me') return;
-  if (!/\/viewtopic\.php$/i.test(location.pathname) ||
-      Number(new URLSearchParams(location.search).get('id')) !== 1364) return;
+  if (!/\/viewtopic\.php$/i.test(location.pathname)) return;
+  var pageParams = new URLSearchParams(location.search);
+  if (Number(pageParams.get('id')) !== 20 || Number(pageParams.get('p') || 1) !== 1) return;
   var forumRoot = document.getElementById('pun');
   var admin = Number(window.GroupID) === 1 ||
               (forumRoot && forumRoot.classList.contains('isadmin'));
-  if (!admin) return; // только администрация; тему дополнительно закрыть правами форума
+  if (Number(window.UserID || 0) < 2 || Number(window.GroupID) === 3) return;
   if (document.getElementById('ssbc')) return;
   // Стили хранятся вместе со скриптом, отдельный CSS-файл не нужен.
   if (!document.getElementById('ssbc-external-styles')) {
     var bankStyle = document.createElement('style');
     bankStyle.id = 'ssbc-external-styles';
-    bankStyle.textContent = "/* Дизайн согласован с темой банка Гринготтс */\n\n.ssbc-wrap { box-sizing: border-box; width: 94%; max-width: 900px; margin: 24px auto;\n  background: #f4f0e8; border: 1px solid #d8d0c5; border-radius: 12px;\n  padding: 19px; font-family: Arial, sans-serif; color: #403a43; }\n.ssbc-wrap .ssbc-headline { font-family: Georgia, serif; font-weight: normal; text-align:center; font-size: 19px; color: #4b3b59; margin: 0 0 6px; }\n.ssbc-wrap .ssbc-intro { color: #766f77; font-size: 12px; line-height: 1.65; text-align: center; margin: 0 0 17px; }\n.ssbc-wrap .ssbc-fields { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-bottom: 14px; }\n.ssbc-wrap .ssbc-fields label { flex: 1 1 175px; display:flex; flex-direction:column; gap:6px; font-size:12px; color:#51415e; }\n.ssbc-wrap .ssbc-fields select, .ssbc-wrap .ssbc-fields input { font: 13px Arial, sans-serif; color:#403a43; border-radius:8px; border:1px solid #cbc0d1; box-sizing:border-box; padding:9px; width:100%; background:#fff; }\n.ssbc-wrap .ssbc-check { display:block; font-size:12px; color:#625a66; line-height:1.5; margin:10px 0 15px; }\n.ssbc-wrap .ssbc-check input, .ssbc-wrap .ssbc-confirm input, .ssbc-wrap .ssbc-row input { vertical-align:middle; accent-color:#695485; }\n.ssbc-wrap .ssbc-button { display:inline-block; border:0; border-radius:8px; padding:11px 17px; font: 12px Arial, sans-serif; cursor:pointer; background:#5f4c75; color:#fff; transition: .2s; }\n.ssbc-wrap .ssbc-button:hover { background: #48345e; }\n.ssbc-wrap .ssbc-button:disabled { opacity:.48; cursor:default; }\n.ssbc-wrap .ssbc-button-light { background:#e4dce9; color:#45394f; }\n.ssbc-wrap .ssbc-button-light:hover { background:#d4c5dd; }\n.ssbc-wrap .ssbc-status { margin:14px 0; border-left:3px solid #a98e61; padding:10px 12px; background:#ece8e2; font-size:12px; line-height:1.5; }\n.ssbc-wrap .ssbc-status.ok { border-color:#678269; background:#e3e9e1; }\n.ssbc-wrap .ssbc-status.error, .ssbc-wrap .ssbc-alert { border-color:#ad665f; background:#f3e4e0; }\n.ssbc-wrap .ssbc-summary { background:#e6ddeb; border-radius:9px; padding:14px; line-height:1.75; text-align:center; margin-top:16px; font-size:13px; color:#453354; }\n.ssbc-wrap .ssbc-small { font-size:11px; line-height:1.5; color:#756e79; }\n.ssbc-wrap .ssbc-alert { border-left:3px solid #ad665f; padding:12px; margin:12px 0; font-size:11px; line-height:1.7; border-radius:4px; }\n.ssbc-wrap .ssbc-alert details { margin-top:6px; max-height:180px; overflow:auto; }\n.ssbc-wrap .ssbc-alert summary { cursor:pointer; }\n.ssbc-wrap .ssbc-rows { max-height:360px; overflow:auto; margin:10px 0 15px; }\n.ssbc-wrap .ssbc-row { display:flex; align-items:center; justify-content:space-between; gap:10px; border-bottom:1px solid #ded6ce; padding:9px 4px; font-size:12px; }\n.ssbc-wrap .ssbc-row label { min-width:0; line-height:1.5; }\n.ssbc-wrap .ssbc-row small { color:#817886; font-size:10px; }\n.ssbc-wrap .ssbc-row b { white-space:nowrap; color:#5a466b; }\n.ssbc-wrap .ssbc-confirm { display:block; padding:12px; font-size:12px; line-height:1.5; background:#f3e4e0; border-radius:8px; margin:8px 0 15px; }\n.ssbc-wrap .ssbc-actions { display:flex; gap:9px; align-items:center; flex-wrap:wrap; margin:12px 0; }\n.ssbc-wrap .ssbc-actions[hidden], .ssbc-wrap #ssbc-custom[hidden] { display:none!important; }\n.ssbc-wrap #ssbc-text { width:100%; min-height:175px; resize:vertical; box-sizing:border-box; border:1px solid #cbc0d1; padding:12px; border-radius:8px; font:12px/1.5 Consolas,monospace; color:#3b3440; background:white; }\n.ssbc-wrap .ssbc-oldclaims { margin: 14px 0; padding: 13px; background: #faf8f4; border: 1px solid #d8d0c5; border-radius: 9px; }\n.ssbc-wrap .ssbc-oldclaims h4 { margin: 0 0 10px; font: normal 15px Georgia,serif; color:#4b3b59; }\n.ssbc-wrap .ssbc-oldclaims-list { max-height:300px; overflow-y:auto; overflow-wrap:anywhere; }\n.ssbc-wrap .ssbc-oldclaims-list .ssbc-claim-entry { padding:5px 3px; border-bottom:1px solid #e9e1d7; font-size:12px; line-height:1.5; }\n.ssbc-wrap .ssbc-oldclaims-list .ssbc-claim-entry:last-child { border-bottom:0; }\n.ssbc-wrap .ssbc-oldclaims-list a { color:#5f4c75; text-decoration: underline; }\n.ssbc-wrap #ssbc-progress[hidden] {display:none!important;}\n.ssbc-wrap #ssbc-progress {padding:12px 14px; margin:12px 0 15px; border:1px solid #d8d0c5; background:#faf8f4; border-radius:9px;}\n.ssbc-wrap .ssbc-progress-top {display:flex; justify-content:space-between; align-items:center; gap:14px; color:#51415e; font:12px/1.4 Arial,sans-serif; margin-bottom:8px;}\n.ssbc-wrap #ssbc-progress-pct {font-weight:700; color:#4b3b59; white-space:nowrap; font-variant-numeric:tabular-nums;}\n.ssbc-wrap #ssbc-progress-bar {display:block; width:100%;height:12px;border:0;border-radius:20px;overflow:hidden;background:#e4dce9;accent-color:#806a99;}\n.ssbc-wrap #ssbc-progress-bar::-webkit-progress-bar {background:#e4dce9;border-radius:20px;}\n.ssbc-wrap #ssbc-progress-bar::-webkit-progress-value {background:linear-gradient(90deg,#806a99,#5f4c75);border-radius:20px;transition:width .22s ease;}\n.ssbc-wrap #ssbc-progress-bar::-moz-progress-bar {background:#806a99;border-radius:20px;}\n.ssbc-wrap #ssbc-progress[data-state='error'] {border-color:#ad665f;}\n.ssbc-wrap #ssbc-progress[data-state='done'] {border-color:#678269;}\n\n@media(max-width:650px){.ssbc-wrap {width:100%;padding:12px;} .ssbc-wrap .ssbc-headline{font-size:16px;} .ssbc-wrap .ssbc-row{flex-wrap:wrap;} .ssbc-wrap .ssbc-fields{gap:9px;} .ssbc-wrap .ssbc-button{padding:10px 11px;} }";
+    bankStyle.textContent = "/* Дизайн согласован с темой банка Гринготтс */\n\n.ssbc-wrap { box-sizing: border-box; width: 100%; max-width: none; margin: 24px auto 0;\n  background: #f4f0e8; border: 1px solid #d8d0c5; border-radius: 12px;\n  padding: 19px; font-family: Arial, sans-serif; color: #403a43; }\n.ssbc-wrap .ssbc-headline { font-family: Georgia, serif; font-weight: normal; text-align:center; font-size: 19px; color: #4b3b59; margin: 0 0 6px; }\n.ssbc-wrap .ssbc-intro { color: #766f77; font-size: 12px; line-height: 1.65; text-align: center; margin: 0 0 17px; }\n.ssbc-wrap .ssbc-fields { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-bottom: 14px; }\n.ssbc-wrap .ssbc-fields label { flex: 1 1 175px; display:flex; flex-direction:column; gap:6px; font-size:12px; color:#51415e; }\n.ssbc-wrap .ssbc-fields select, .ssbc-wrap .ssbc-fields input { font: 13px Arial, sans-serif; color:#403a43; border-radius:8px; border:1px solid #cbc0d1; box-sizing:border-box; padding:9px; width:100%; background:#fff; }\n.ssbc-wrap .ssbc-check { display:block; font-size:12px; color:#625a66; line-height:1.5; margin:10px 0 15px; }\n.ssbc-wrap .ssbc-check input, .ssbc-wrap .ssbc-confirm input, .ssbc-wrap .ssbc-row input { vertical-align:middle; accent-color:#695485; }\n.ssbc-wrap .ssbc-button { display:inline-block; border:0; border-radius:8px; padding:11px 17px; font: 12px Arial, sans-serif; cursor:pointer; background:#5f4c75; color:#fff; transition: .2s; }\n.ssbc-wrap .ssbc-button:hover { background: #48345e; }\n.ssbc-wrap .ssbc-button:disabled { opacity:.48; cursor:default; }\n.ssbc-wrap .ssbc-button-light { background:#e4dce9; color:#45394f; }\n.ssbc-wrap .ssbc-button-light:hover { background:#d4c5dd; }\n.ssbc-wrap .ssbc-status { margin:14px 0; border-left:3px solid #a98e61; padding:10px 12px; background:#ece8e2; font-size:12px; line-height:1.5; }\n.ssbc-wrap .ssbc-status.ok { border-color:#678269; background:#e3e9e1; }\n.ssbc-wrap .ssbc-status.error, .ssbc-wrap .ssbc-alert { border-color:#ad665f; background:#f3e4e0; }\n.ssbc-wrap .ssbc-summary { background:#e6ddeb; border-radius:9px; padding:14px; line-height:1.75; text-align:center; margin-top:16px; font-size:13px; color:#453354; }\n.ssbc-wrap .ssbc-small { font-size:11px; line-height:1.5; color:#756e79; }\n.ssbc-wrap .ssbc-alert { border-left:3px solid #ad665f; padding:12px; margin:12px 0; font-size:11px; line-height:1.7; border-radius:4px; }\n.ssbc-wrap .ssbc-alert details { margin-top:6px; max-height:180px; overflow:auto; }\n.ssbc-wrap .ssbc-alert summary { cursor:pointer; }\n.ssbc-wrap .ssbc-rows { max-height:360px; overflow:auto; margin:10px 0 15px; }\n.ssbc-wrap .ssbc-row { display:flex; align-items:center; justify-content:space-between; gap:10px; border-bottom:1px solid #ded6ce; padding:9px 4px; font-size:12px; }\n.ssbc-wrap .ssbc-row label { min-width:0; line-height:1.5; }\n.ssbc-wrap .ssbc-row small { color:#817886; font-size:10px; }\n.ssbc-wrap .ssbc-row b { white-space:nowrap; color:#5a466b; }\n.ssbc-wrap .ssbc-confirm { display:block; padding:12px; font-size:12px; line-height:1.5; background:#f3e4e0; border-radius:8px; margin:8px 0 15px; }\n.ssbc-wrap .ssbc-actions { display:flex; gap:9px; align-items:center; flex-wrap:wrap; margin:12px 0; }\n.ssbc-wrap .ssbc-actions[hidden], .ssbc-wrap #ssbc-custom[hidden] { display:none!important; }\n.ssbc-wrap #ssbc-text { width:100%; min-height:175px; resize:vertical; box-sizing:border-box; border:1px solid #cbc0d1; padding:12px; border-radius:8px; font:12px/1.5 Consolas,monospace; color:#3b3440; background:white; }\n.ssbc-wrap .ssbc-oldclaims { margin: 14px 0; padding: 13px; background: #faf8f4; border: 1px solid #d8d0c5; border-radius: 9px; }\n.ssbc-wrap .ssbc-oldclaims h4 { margin: 0 0 10px; font: normal 15px Georgia,serif; color:#4b3b59; }\n.ssbc-wrap .ssbc-oldclaims-list { max-height:300px; overflow-y:auto; overflow-wrap:anywhere; }\n.ssbc-wrap .ssbc-oldclaims-list .ssbc-claim-entry { padding:5px 3px; border-bottom:1px solid #e9e1d7; font-size:12px; line-height:1.5; }\n.ssbc-wrap .ssbc-oldclaims-list .ssbc-claim-entry:last-child { border-bottom:0; }\n.ssbc-wrap .ssbc-oldclaims-list a { color:#5f4c75; text-decoration: underline; }\n.ssbc-wrap #ssbc-progress[hidden] {display:none!important;}\n.ssbc-wrap #ssbc-progress {padding:12px 14px; margin:12px 0 15px; border:1px solid #d8d0c5; background:#faf8f4; border-radius:9px;}\n.ssbc-wrap .ssbc-progress-top {display:flex; justify-content:space-between; align-items:center; gap:14px; color:#51415e; font:12px/1.4 Arial,sans-serif; margin-bottom:8px;}\n.ssbc-wrap #ssbc-progress-pct {font-weight:700; color:#4b3b59; white-space:nowrap; font-variant-numeric:tabular-nums;}\n.ssbc-wrap #ssbc-progress-bar {display:block; width:100%;height:12px;border:0;border-radius:20px;overflow:hidden;background:#e4dce9;accent-color:#806a99;}\n.ssbc-wrap #ssbc-progress-bar::-webkit-progress-bar {background:#e4dce9;border-radius:20px;}\n.ssbc-wrap #ssbc-progress-bar::-webkit-progress-value {background:linear-gradient(90deg,#806a99,#5f4c75);border-radius:20px;transition:width .22s ease;}\n.ssbc-wrap #ssbc-progress-bar::-moz-progress-bar {background:#806a99;border-radius:20px;}\n.ssbc-wrap #ssbc-progress[data-state='error'] {border-color:#ad665f;}\n.ssbc-wrap #ssbc-progress[data-state='done'] {border-color:#678269;}\n\n@media(max-width:650px){.ssbc-wrap {width:100%;padding:12px;} .ssbc-wrap .ssbc-headline{font-size:16px;} .ssbc-wrap .ssbc-row{flex-wrap:wrap;} .ssbc-wrap .ssbc-fields{gap:9px;} .ssbc-wrap .ssbc-button{padding:10px 11px;} }";
     document.head.appendChild(bankStyle);
   }
   // У Rusff оформление темы может менять вложенность .post и .topicpost.
   var firstPost = document.querySelector('#pun-viewtopic .post.topicpost') ||
                   document.querySelector('#pun-viewtopic .post') ||
-                  document.querySelector('#pun-main .post') ||
-                  document.querySelector('#pun-viewtopic .topic');
-  var mountPoint = firstPost || document.querySelector('#pun-main');
+                  document.querySelector('#pun-main .post');
+  // Важно: добавляем калькулятор ВНУТРЬ первого поста — под банковскими
+  // таблицами, но перед реакциями/кнопками и ответами других игроков.
+  var mountPoint = firstPost &&
+    (firstPost.querySelector('.post-content') || firstPost.querySelector('.post-body'));
   if (!mountPoint) {
-    console.warn('[Gringotts] Не найден #pun-main для вставки сборщика');
+    console.warn('[Gringotts] Не найдено содержимое первого поста банка; ничего не вставлено');
     return;
   }
   var root = document.createElement('section');
@@ -85,13 +90,12 @@
           <div class="ssbc-actions">
             <b id="ssbc-selected-total">К начислению: 0</b>
             <button type="button" id="ssbc-copy" class="ssbc-button ssbc-button-light">Скопировать BBCode</button>
-            <button type="button" id="ssbc-insert" class="ssbc-button">Вставить в ответ темы №1364</button>
+            <button type="button" id="ssbc-insert" class="ssbc-button">Вставить в ответ банка</button>
           </div>
           <textarea id="ssbc-text" readonly aria-label="Текст банковской заявки"></textarea>
 
         </div>`;
-  if (firstPost) firstPost.insertAdjacentElement('beforebegin', root);
-  else mountPoint.insertAdjacentElement('afterbegin', root);
+  mountPoint.appendChild(root);
 
   var CFG = {
     bankTopics: [20], // Единственный источник заявленных/оплаченных постов: действующий банк №20
@@ -113,8 +117,8 @@
     bankRawDelayMs: 180
   };
   var $ = function (selector) { return root.querySelector(selector); };
-  var currentAdminId = Number(window.UserID || 0);
-  var userId = currentAdminId; // меняется по выбранному ID профиля при расчёте
+  var currentUserId = Number(window.UserID || 0);
+  var userId = currentUserId; // меняется по выбранному ID профиля при расчёте
   var userName = String(window.UserLogin || '');
   var state = { rows: [], used: new Map(), suspicious: [], claimDetails: new Map(), priorClaims: [], full: false, raw: '', historyCount: 0 };
   var bankHistoryCache = null; // только на время открытой страницы, без хранения на сервере/в localStorage
@@ -380,8 +384,8 @@
     return data[0];
   }
 
-  // Сверяем ВСЮ историю банка №20 тремя источниками: API, HTML и исходный BBCode.
-  // Иначе спойлер, скрытый в HTML и от API, может дать повторное начисление.
+  // Для АМС — полная сверка тремя источниками, для игроков — публичные HTML/API.
+  // Игровой расчёт всегда требует подтверждения АМС до начисления.
   async function bankHistoryOne(topicId) {
     var topic = await bankTopicInfo(topicId);
     var expected = Number(topic.num_replies) + 1;
@@ -416,7 +420,10 @@
       Math.min.apply(null, Array.from(htmlById.keys()));
     var idsToAudit = Array.from(htmlById.keys()).filter(function (id) { return id !== firstId; });
     // Ключевое изменение: НЕ считаем HTML/API единственным источником ссылок.
-    var rawById = await allRawBankPosts(idsToAudit, topicId);
+    // Для игроков Rusff не разрешает GET edit.php чужих сообщений.
+    // Администратор сохраняет строгий режим проверки всех исходников.
+    // Игрокам доступны только HTML/API, поэтому результат предварительный.
+    var rawById = admin ? await allRawBankPosts(idsToAudit, topicId) : new Map();
     var used = new Map();
     var uncertain = [];
     var claimDetails = new Map();
@@ -869,7 +876,7 @@
     });
     if (!newRows.length) html += '<p>Новых подходящих постов за этот период нет.</p>';
     html += '</div></section>';
-    if (history.suspicious.length) {
+    if (admin && history.suspicious.length) {
       html += '<label class="ssbc-confirm"><input type="checkbox" id="ssbc-reviewed"> ' +
         'Я проверил(а) предыдущие заявки без ссылок и подтвердил(а), что новые посты ещё не оплачены</label>';
     }
@@ -882,7 +889,7 @@
     $('#ssbc-result').querySelectorAll('input[type="checkbox"]').forEach(function (input) {
       input.addEventListener('change', buildBBCode);
     });
-    show('Расчёт готов.', 'ok');
+    show(admin ? 'Расчёт готов.' : 'Предварительный расчёт готов. Перед начислением АМС проверит заявку.', 'ok');
   }
 
   function buildBBCode() {
@@ -906,6 +913,7 @@
     } else {
       lines.push('Предыдущих заявок не найдено.');
     }
+    if (!admin) lines.push('', '[i]Расчёт предварительный: АМС сверяет предыдущие заявки перед начислением.[/i]');
     lines.push('', '[b]Новые посты:[/b]');
     if (game.length) {
       lines.push('', '[b]Основная / сюжетная игра (' + game.length + ' × 30):[/b]');
@@ -954,7 +962,7 @@
       show('Введи числовой ID профиля игрока (не меньше 2).', 'error'); return;
     }
     userId = selectedId;
-    userName = userId === currentAdminId ? String(window.UserLogin || '') : ('Профиль #' + userId);
+    userName = userId === currentUserId ? String(window.UserLogin || '') : ('Профиль #' + userId);
     var btn = $('#ssbc-scan');
     btn.disabled = true;
     state.full = false;
@@ -1006,13 +1014,13 @@
     area.value = (area.value.trim() ? area.value + '\n\n' : '') + state.raw;
     area.dispatchEvent(new Event('input', {bubbles: true}));
     area.focus();
-    show('Заявка вставлена в ответ тестовой темы №1364. Проверь сумму и при необходимости сохрани сообщение.', 'ok');
+    show('Заявка вставлена в ответ банка. Проверь сумму и отправь сообщение.', 'ok');
     area.scrollIntoView({behavior: 'smooth', block: 'center'});
   });
-  $('#ssbc-target').value = currentAdminId > 1 ? String(currentAdminId) : '';
+  $('#ssbc-target').value = currentUserId > 1 ? String(currentUserId) : '';
   $('#ssbc-balance').value = initialBalance();
   $('#ssbc-target').addEventListener('input', function () {
-    $('#ssbc-balance').value = Number(this.value) === currentAdminId ? initialBalance() : '';
+    $('#ssbc-balance').value = Number(this.value) === currentUserId ? initialBalance() : '';
     state.full = false;
     state.priorClaims = [];
     $('#ssbc-actions').hidden = true;
@@ -1021,9 +1029,9 @@
     show('Выберите игрока и период', 'idle');
   });
   $('#ssbc-balance').addEventListener('input', buildBBCode);
-  if (!userId || userId <= 1) {
+  if (!currentUserId || currentUserId <= 1) {
     $('#ssbc-scan').disabled = true;
-    show('Для использования скрытого сборщика требуется войти под администратором.', 'error');
+    show('Для расчёта постов необходимо войти на форум.', 'error');
   }
   } // mountBank
   if (document.readyState === 'loading') {
