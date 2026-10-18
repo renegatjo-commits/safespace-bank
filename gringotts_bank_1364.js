@@ -1,11 +1,12 @@
 // Safe Space / Gringotts — внешний файл для HTML-низа
 // Встроенный интерфейс доступен только администратору в теме /viewtopic.php?id=1364.
 
-/* Safe Space / Gringotts: закрытый сборщик заявок v2.1 (без общего лимита 1100 сообщений).
+/* Safe Space / Gringotts: закрытый сборщик заявок v2.2 (без общего лимита 1100 сообщений).
  * Показывается только на safespace.rusff.me/viewtopic.php?id=1364,
  * только авторизованным администраторам форума (GroupID===1).
  * Использует тарифы по действующим правилам банка, а историю заявок
- * читает из тем 20 (старый открытый банк), 401 (бывший кабинет) и 1364 (тест).
+ * читает старые заявки ТОЛЬКО из действующей банковской темы №20.
+ * Исключение суточного бонуса +10: темы №687 и №418 (основная оплата сохраняется).
  * НИЧЕГО не начисляет/не списывает/не публикует автоматически.
  * ВАЖНО: реальную приватность темы задают ПРАВА ДОСТУПА Rusff,
  * не эта проверка в JS. Публичный HTML-низ доступен для просмотра кода.
@@ -45,7 +46,7 @@
   root.className = 'ssbc-wrap';
   root.innerHTML = String.raw`
         <h3 class="ssbc-headline">Гринготтс · закрытый сборщик АМС</h3>
-        <p class="ssbc-intro">Проверка постов выбранного игрока и заявок из банка №20, бывшего кабинета №401 и тестовой темы №1364. Готовим BBCode для проверки АМС. Ничего не начисляется автоматически.</p>
+        <p class="ssbc-intro">Проверка постов выбранного игрока и старых заявок только из банка №20. Готовим BBCode для проверки АМС. Ничего не начисляется автоматически.</p>
         <div class="ssbc-fields">
           <label>ID профиля игрока (число из profile.php?id=…)
             <input type="number" id="ssbc-target" min="2" step="1" placeholder="Например: 7">
@@ -66,9 +67,9 @@
             <input type="number" id="ssbc-balance" step="any" min="0" placeholder="Введите вручную">
           </label>
         </div>
-        <label class="ssbc-check"><input id="ssbc-fast" type="checkbox" checked> Добавлять +10 за ответ в течение суток только в личных эпизодах и альтернативе (включая архивы)</label>
+        <label class="ssbc-check"><input id="ssbc-fast" type="checkbox" checked> Добавлять +10 за ответ в течение суток в личных эпизодах и альтернативе (включая архивы), кроме тем №687 и №418</label>
         <button type="button" id="ssbc-scan" class="ssbc-button">Проверить историю и собрать посты</button>
-        <div id="ssbc-status" class="ssbc-status">Выберите игрока и период. История сверяется по трём темам (№20, №401 и №1364).</div>
+        <div id="ssbc-status" class="ssbc-status">Выберите игрока и период. История заявок сверяется только с темой №20.</div>
         <div id="ssbc-result"></div>
         <div id="ssbc-actions" hidden>
           <div class="ssbc-actions">
@@ -77,16 +78,17 @@
             <button type="button" id="ssbc-insert" class="ssbc-button">Вставить в ответ темы №1364</button>
           </div>
           <textarea id="ssbc-text" readonly aria-label="Текст банковской заявки"></textarea>
-          <p class="ssbc-small">Публичная тема №20 остаётся нетронутой. Для проверки новые тестовые подтверждения можно хранить в теме №1364: следующие расчёты проверят все три темы. Старые выплаты без отдельных ссылок требуют ручной сверки. Бонус за 50 постов и другие награды считаются отдельно.</p>
+          <p class="ssbc-small">Публичная тема №20 остаётся нетронутой. Заявки из темы №1364 НЕ проверяются на повторы: если тестовые заявки станут реальными, переносите подтверждения в банк №20 либо сверяйте их вручную. Старые выплаты без отдельных ссылок требуют ручной сверки. Бонус за 50 постов и другие награды считаются отдельно.</p>
         </div>`;
   if (firstPost) firstPost.insertAdjacentElement('beforebegin', root);
   else mountPoint.insertAdjacentElement('afterbegin', root);
 
   var CFG = {
-    bankTopics: [20, 401, 1364], // 20: прежний банк; 401: прошлый кабинет; 1364: тестовые заявки
+    bankTopics: [20], // Единственный источник заявленных/оплаченных постов: действующий банк №20
     minChars: 1000,
     gameForums: {5: 30, 8: 30, 9: 10, 17: 30, 18: 30, 19: 10},
     fastForums: new Set([8, 9, 18, 19]), // личные, альтернатива и их архивы; НЕ сюжетные (5, 17)
+    fastExcludedTopics: new Set([687, 418]), // именно темы (не разделы); за посты платим, бонус +10 не даём
     fastBonus: 10,
     pageSize: 100,
     maxSkip: 1000, // предел одного обхода post.get; после него включается поиск по игровым темам
@@ -202,7 +204,7 @@
     return data[0];
   }
 
-  // Тщательно проверяем историю КАЖДОЙ темы — не допускаем частичного сканирования.
+  // Тщательно проверяем ВСЮ историю единственного банка №20 — не допускаем частичного сканирования.
   async function bankHistoryOne(topicId) {
     var topic = await bankTopicInfo(topicId);
     var expected = Number(topic.num_replies) + 1;
@@ -234,10 +236,7 @@
     var uncertain = [];
     bankRows.forEach(function (post) {
       if (Number(post.id) === firstId) return; // первый пост: правила/содержимое темы
-      // В старом банке №20 все сообщения после первого считаем потенциальными заявками.
-      // В служебных темах №401 и №1364 игнорируем сообщения без признаков заявок:
-      // там могли быть другие материалы, не относящиеся к оплате.
-      if (topicId !== 20 && !/(?:за\s+что|сколько|итогов\w*\s+сумм\w*|к\s+начислению)\s*:/i.test(plainText(post.message))) return;
+      // В действующем банке №20 все сообщения после первого — потенциальные заявки.
       var data = claimData(post.message);
       data.ids.forEach(function (id) {
         if (!used.has(id)) used.set(id, {bankPostId: Number(post.id), topicId: topicId, author: b(post.username)});
@@ -487,7 +486,7 @@
       var firstId = Number(known.init_post) || Number(known.first_post) || 0;
       if (firstId) starters.add(firstId);
       // Для сюжетных эпизодов суточный бонус не предусмотрен (включая архив f17).
-      var canFast = fastEnabled && target.some(function (p) {
+      var canFast = fastEnabled && !CFG.fastExcludedTopics.has(t) && target.some(function (p) {
         return CFG.fastForums.has(Number(p.forum_id));
       });
       if (!canFast && firstId) continue;
@@ -520,7 +519,7 @@
       if (canFast && complete) {
         var index = new Map(all.map(function (post, n) { return [Number(post.id), n]; }));
         target.forEach(function (post) {
-          if (!CFG.fastForums.has(Number(post.forum_id))) return;
+          if (!CFG.fastForums.has(Number(post.forum_id)) || CFG.fastExcludedTopics.has(Number(post.topic_id))) return;
           var pos = index.get(Number(post.id));
           if (pos == null || pos < 1) return;
           var prev = all[pos - 1];
@@ -564,7 +563,8 @@
       if (len < CFG.minChars) { tooShort.push(p); return; }
       if (history.used.has(id)) { usedRows.push(p); return; }
       var base = CFG.gameForums[Number(p.forum_id)];
-      var fast = CFG.fastForums.has(Number(p.forum_id)) && ctx.quick.has(id) ? CFG.fastBonus : 0;
+      var fast = CFG.fastForums.has(Number(p.forum_id)) &&
+        !CFG.fastExcludedTopics.has(Number(p.topic_id)) && ctx.quick.has(id) ? CFG.fastBonus : 0;
       newRows.push({id: id, posted: p.posted, length: len, forum: Number(p.forum_id), base: base,
         fast: fast, sum: base + fast});
     });
@@ -578,7 +578,7 @@
     var name = escapeHtml(userName);
     var html = '<div class="ssbc-summary"><b>' + newRows.length + '</b> новых · <b>' + usedRows.length +
       '</b> уже заявлены · <b>' + tooShort.length + '</b> короче 1000 символов<br><b>Итого: +' + money(total) + ' галлеонов</b></div>';
-    html += '<p class="ssbc-small">Проверено ' + history.historyCount + ' сообщений в трёх банковских темах. Посты из заявок любого игрока исключены по ID.</p>';
+    html += '<p class="ssbc-small">Проверено ' + history.historyCount + ' сообщений темы №20. Посты из заявок любого игрока исключены по ID.</p>';
     if (usedRows.length) {
       html += '<details class="ssbc-small"><summary style="cursor:pointer">Показать уже заявленные посты (' +
         usedRows.length + ')</summary><div style="padding:7px 10px">' +
@@ -622,7 +622,7 @@
     $('#ssbc-result').querySelectorAll('input[type="checkbox"]').forEach(function (input) {
       input.addEventListener('change', buildBBCode);
     });
-    show('Проверка трёх тем завершена. Отметь подходящие посты и скопируй заявку.', 'ok');
+    show('Проверка темы №20 завершена. Отметь подходящие посты и скопируй заявку.', 'ok');
   }
 
   function buildBBCode() {
@@ -688,7 +688,7 @@
     try {
       var since = selectedDate();
       var fast = $('#ssbc-fast').checked;
-      show('Сверяю старые и новые заявки в темах №20, №401 и №1364…');
+      show('Сверяю старые заявки только в теме №20…');
       var history = await bankHistory();
       var posts = await userPosts(since);
       if (posts.length && posts[0].username) userName = b(posts[0].username);
@@ -710,7 +710,7 @@
   $('#ssbc-scan').addEventListener('click', calculate);
   $('#ssbc-copy').addEventListener('click', function () {
     buildBBCode();
-    copy(state.raw).then(function () { show('BBCode скопирован. Для теста сохраняйте новые заявки в теме №1364, чтобы они учитывались при следующей проверке.', 'ok'); })
+    copy(state.raw).then(function () { show('BBCode скопирован. При следующем расчёте проверяются только заявки из банка №20.', 'ok'); })
       .catch(function (e) { show(e.message, 'error'); });
   });
   $('#ssbc-insert').addEventListener('click', function () {
@@ -734,7 +734,7 @@
     state.full = false;
     $('#ssbc-actions').hidden = true;
     $('#ssbc-result').innerHTML = '';
-    show('Профиль изменён. Запусти новую проверку всех трёх тем.');
+    show('Профиль изменён. Запусти новую проверку банка №20.');
   });
   $('#ssbc-balance').addEventListener('input', buildBBCode);
   if (!userId || userId <= 1) {
