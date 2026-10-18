@@ -1,13 +1,15 @@
 // Safe Space / Gringotts — внешний файл для HTML-низа
 // Встроенный интерфейс доступен только администратору в теме /viewtopic.php?id=1364.
 
-/* Safe Space / Gringotts: закрытый сборщик заявок v2.3 (без общего лимита 1100 сообщений).
+/* Safe Space / Gringotts: закрытый сборщик заявок v2.7 (ссылки на прежние заявки с упоминанием постов).
  * Показывается только на safespace.rusff.me/viewtopic.php?id=1364,
  * только авторизованным администраторам форума (GroupID===1).
  * Использует тарифы по действующим правилам банка, а историю заявок
  * читает старые заявки ТОЛЬКО из действующей банковской темы №20.
  * Старые заявки: URL id=ТЕМА#pПОСТ, pid=ПОСТ#pПОСТ и BBCode нормализуются по ID.
- * Не удаляем [code]/спойлеры при чтении старых заявок.
+ * Сопоставляем API + HTML + ИСХОДНЫЙ BBCODE через GET edit.php?id=ID для ВСЕХ ответов банка №20.
+ * Если исходник хотя бы одной заявки прочитать нельзя, НЕ выдаём неполный расчёт.
+ * Не удаляем [code]/спойлеры/цитаты при чтении старых заявок.
  * Исключение суточного бонуса +10: темы №687 и №418 (основная оплата сохраняется).
  * НИЧЕГО не начисляет/не списывает/не публикует автоматически.
  * ВАЖНО: реальную приватность темы задают ПРАВА ДОСТУПА Rusff,
@@ -30,7 +32,7 @@
   if (!document.getElementById('ssbc-external-styles')) {
     var bankStyle = document.createElement('style');
     bankStyle.id = 'ssbc-external-styles';
-    bankStyle.textContent = "/* Дизайн согласован с темой банка Гринготтс */\n\n.ssbc-wrap { box-sizing: border-box; width: 94%; max-width: 900px; margin: 24px auto;\n  background: #f4f0e8; border: 1px solid #d8d0c5; border-radius: 12px;\n  padding: 19px; font-family: Arial, sans-serif; color: #403a43; }\n.ssbc-wrap .ssbc-headline { font-family: Georgia, serif; font-weight: normal; text-align:center; font-size: 19px; color: #4b3b59; margin: 0 0 6px; }\n.ssbc-wrap .ssbc-intro { color: #766f77; font-size: 12px; line-height: 1.65; text-align: center; margin: 0 0 17px; }\n.ssbc-wrap .ssbc-fields { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-bottom: 14px; }\n.ssbc-wrap .ssbc-fields label { flex: 1 1 175px; display:flex; flex-direction:column; gap:6px; font-size:12px; color:#51415e; }\n.ssbc-wrap .ssbc-fields select, .ssbc-wrap .ssbc-fields input { font: 13px Arial, sans-serif; color:#403a43; border-radius:8px; border:1px solid #cbc0d1; box-sizing:border-box; padding:9px; width:100%; background:#fff; }\n.ssbc-wrap .ssbc-check { display:block; font-size:12px; color:#625a66; line-height:1.5; margin:10px 0 15px; }\n.ssbc-wrap .ssbc-check input, .ssbc-wrap .ssbc-confirm input, .ssbc-wrap .ssbc-row input { vertical-align:middle; accent-color:#695485; }\n.ssbc-wrap .ssbc-button { display:inline-block; border:0; border-radius:8px; padding:11px 17px; font: 12px Arial, sans-serif; cursor:pointer; background:#5f4c75; color:#fff; transition: .2s; }\n.ssbc-wrap .ssbc-button:hover { background: #48345e; }\n.ssbc-wrap .ssbc-button:disabled { opacity:.48; cursor:default; }\n.ssbc-wrap .ssbc-button-light { background:#e4dce9; color:#45394f; }\n.ssbc-wrap .ssbc-button-light:hover { background:#d4c5dd; }\n.ssbc-wrap .ssbc-status { margin:14px 0; border-left:3px solid #a98e61; padding:10px 12px; background:#ece8e2; font-size:12px; line-height:1.5; }\n.ssbc-wrap .ssbc-status.ok { border-color:#678269; background:#e3e9e1; }\n.ssbc-wrap .ssbc-status.error, .ssbc-wrap .ssbc-alert { border-color:#ad665f; background:#f3e4e0; }\n.ssbc-wrap .ssbc-summary { background:#e6ddeb; border-radius:9px; padding:14px; line-height:1.75; text-align:center; margin-top:16px; font-size:13px; color:#453354; }\n.ssbc-wrap .ssbc-small { font-size:11px; line-height:1.5; color:#756e79; }\n.ssbc-wrap .ssbc-alert { border-left:3px solid #ad665f; padding:12px; margin:12px 0; font-size:11px; line-height:1.7; border-radius:4px; }\n.ssbc-wrap .ssbc-alert details { margin-top:6px; max-height:180px; overflow:auto; }\n.ssbc-wrap .ssbc-alert summary { cursor:pointer; }\n.ssbc-wrap .ssbc-rows { max-height:360px; overflow:auto; margin:10px 0 15px; }\n.ssbc-wrap .ssbc-row { display:flex; align-items:center; justify-content:space-between; gap:10px; border-bottom:1px solid #ded6ce; padding:9px 4px; font-size:12px; }\n.ssbc-wrap .ssbc-row label { min-width:0; line-height:1.5; }\n.ssbc-wrap .ssbc-row small { color:#817886; font-size:10px; }\n.ssbc-wrap .ssbc-row b { white-space:nowrap; color:#5a466b; }\n.ssbc-wrap .ssbc-confirm { display:block; padding:12px; font-size:12px; line-height:1.5; background:#f3e4e0; border-radius:8px; margin:8px 0 15px; }\n.ssbc-wrap .ssbc-actions { display:flex; gap:9px; align-items:center; flex-wrap:wrap; margin:12px 0; }\n.ssbc-wrap .ssbc-actions[hidden], .ssbc-wrap #ssbc-custom[hidden] { display:none!important; }\n.ssbc-wrap #ssbc-text { width:100%; min-height:175px; resize:vertical; box-sizing:border-box; border:1px solid #cbc0d1; padding:12px; border-radius:8px; font:12px/1.5 Consolas,monospace; color:#3b3440; background:white; }\n@media(max-width:650px){.ssbc-wrap {width:100%;padding:12px;} .ssbc-wrap .ssbc-headline{font-size:16px;} .ssbc-wrap .ssbc-row{flex-wrap:wrap;} .ssbc-wrap .ssbc-fields{gap:9px;} .ssbc-wrap .ssbc-button{padding:10px 11px;} }";
+    bankStyle.textContent = "/* Дизайн согласован с темой банка Гринготтс */\n\n.ssbc-wrap { box-sizing: border-box; width: 94%; max-width: 900px; margin: 24px auto;\n  background: #f4f0e8; border: 1px solid #d8d0c5; border-radius: 12px;\n  padding: 19px; font-family: Arial, sans-serif; color: #403a43; }\n.ssbc-wrap .ssbc-headline { font-family: Georgia, serif; font-weight: normal; text-align:center; font-size: 19px; color: #4b3b59; margin: 0 0 6px; }\n.ssbc-wrap .ssbc-intro { color: #766f77; font-size: 12px; line-height: 1.65; text-align: center; margin: 0 0 17px; }\n.ssbc-wrap .ssbc-fields { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-bottom: 14px; }\n.ssbc-wrap .ssbc-fields label { flex: 1 1 175px; display:flex; flex-direction:column; gap:6px; font-size:12px; color:#51415e; }\n.ssbc-wrap .ssbc-fields select, .ssbc-wrap .ssbc-fields input { font: 13px Arial, sans-serif; color:#403a43; border-radius:8px; border:1px solid #cbc0d1; box-sizing:border-box; padding:9px; width:100%; background:#fff; }\n.ssbc-wrap .ssbc-check { display:block; font-size:12px; color:#625a66; line-height:1.5; margin:10px 0 15px; }\n.ssbc-wrap .ssbc-check input, .ssbc-wrap .ssbc-confirm input, .ssbc-wrap .ssbc-row input { vertical-align:middle; accent-color:#695485; }\n.ssbc-wrap .ssbc-button { display:inline-block; border:0; border-radius:8px; padding:11px 17px; font: 12px Arial, sans-serif; cursor:pointer; background:#5f4c75; color:#fff; transition: .2s; }\n.ssbc-wrap .ssbc-button:hover { background: #48345e; }\n.ssbc-wrap .ssbc-button:disabled { opacity:.48; cursor:default; }\n.ssbc-wrap .ssbc-button-light { background:#e4dce9; color:#45394f; }\n.ssbc-wrap .ssbc-button-light:hover { background:#d4c5dd; }\n.ssbc-wrap .ssbc-status { margin:14px 0; border-left:3px solid #a98e61; padding:10px 12px; background:#ece8e2; font-size:12px; line-height:1.5; }\n.ssbc-wrap .ssbc-status.ok { border-color:#678269; background:#e3e9e1; }\n.ssbc-wrap .ssbc-status.error, .ssbc-wrap .ssbc-alert { border-color:#ad665f; background:#f3e4e0; }\n.ssbc-wrap .ssbc-summary { background:#e6ddeb; border-radius:9px; padding:14px; line-height:1.75; text-align:center; margin-top:16px; font-size:13px; color:#453354; }\n.ssbc-wrap .ssbc-small { font-size:11px; line-height:1.5; color:#756e79; }\n.ssbc-wrap .ssbc-alert { border-left:3px solid #ad665f; padding:12px; margin:12px 0; font-size:11px; line-height:1.7; border-radius:4px; }\n.ssbc-wrap .ssbc-alert details { margin-top:6px; max-height:180px; overflow:auto; }\n.ssbc-wrap .ssbc-alert summary { cursor:pointer; }\n.ssbc-wrap .ssbc-rows { max-height:360px; overflow:auto; margin:10px 0 15px; }\n.ssbc-wrap .ssbc-row { display:flex; align-items:center; justify-content:space-between; gap:10px; border-bottom:1px solid #ded6ce; padding:9px 4px; font-size:12px; }\n.ssbc-wrap .ssbc-row label { min-width:0; line-height:1.5; }\n.ssbc-wrap .ssbc-row small { color:#817886; font-size:10px; }\n.ssbc-wrap .ssbc-row b { white-space:nowrap; color:#5a466b; }\n.ssbc-wrap .ssbc-confirm { display:block; padding:12px; font-size:12px; line-height:1.5; background:#f3e4e0; border-radius:8px; margin:8px 0 15px; }\n.ssbc-wrap .ssbc-actions { display:flex; gap:9px; align-items:center; flex-wrap:wrap; margin:12px 0; }\n.ssbc-wrap .ssbc-actions[hidden], .ssbc-wrap #ssbc-custom[hidden] { display:none!important; }\n.ssbc-wrap #ssbc-text { width:100%; min-height:175px; resize:vertical; box-sizing:border-box; border:1px solid #cbc0d1; padding:12px; border-radius:8px; font:12px/1.5 Consolas,monospace; color:#3b3440; background:white; }\n.ssbc-wrap .ssbc-oldclaims { margin: 14px 0; padding: 13px; background: #faf8f4; border: 1px solid #d8d0c5; border-radius: 9px; }\n.ssbc-wrap .ssbc-oldclaims h4 { margin: 0 0 10px; font: normal 15px Georgia,serif; color:#4b3b59; }\n.ssbc-wrap .ssbc-oldclaims-list { max-height:300px; overflow-y:auto; overflow-wrap:anywhere; }\n.ssbc-wrap .ssbc-oldclaims-list .ssbc-claim-entry { padding:5px 3px; border-bottom:1px solid #e9e1d7; font-size:12px; line-height:1.5; }\n.ssbc-wrap .ssbc-oldclaims-list .ssbc-claim-entry:last-child { border-bottom:0; }\n.ssbc-wrap .ssbc-oldclaims-list a { color:#5f4c75; text-decoration: underline; }\n@media(max-width:650px){.ssbc-wrap {width:100%;padding:12px;} .ssbc-wrap .ssbc-headline{font-size:16px;} .ssbc-wrap .ssbc-row{flex-wrap:wrap;} .ssbc-wrap .ssbc-fields{gap:9px;} .ssbc-wrap .ssbc-button{padding:10px 11px;} }";
     document.head.appendChild(bankStyle);
   }
   // У Rusff оформление темы может менять вложенность .post и .topicpost.
@@ -47,8 +49,8 @@
   root.id = 'ssbc';
   root.className = 'ssbc-wrap';
   root.innerHTML = String.raw`
-        <h3 class="ssbc-headline">Гринготтс · закрытый сборщик АМС</h3>
-        <p class="ssbc-intro">Проверка постов выбранного игрока и старых заявок только из банка №20. Готовим BBCode для проверки АМС. Ничего не начисляется автоматически.</p>
+        <h3 class="ssbc-headline">Гринготтс · закрытый сборщик АМС <small style="font-size:10px">v2.7</small></h3>
+        <p class="ssbc-intro">Проверка постов выбранного игрока и старых заявок только из банка №20. Читаем исходный BBCode каждой старой заявки, включая закрытые спойлеры. Ничего не начисляется автоматически.</p>
         <div class="ssbc-fields">
           <label>ID профиля игрока (число из profile.php?id=…)
             <input type="number" id="ssbc-target" min="2" step="1" placeholder="Например: 7">
@@ -72,6 +74,21 @@
         <label class="ssbc-check"><input id="ssbc-fast" type="checkbox" checked> Добавлять +10 за ответ в течение суток в личных эпизодах и альтернативе (включая архивы), кроме тем №687 и №418</label>
         <button type="button" id="ssbc-scan" class="ssbc-button">Проверить историю и собрать посты</button>
         <div id="ssbc-status" class="ssbc-status">Выберите игрока и период. История заявок сверяется только с темой №20.</div>
+        <section class="ssbc-oldclaims" aria-label="Предыдущие заявки на подсчёт постов">
+          <h4>Предыдущие заявки на подсчёт постов:</h4>
+          <div class="ssbc-actions" style="margin: 5px 0 10px">
+            <button type="button" id="ssbc-load-claims" class="ssbc-button ssbc-button-light">Показать ссылки на заявки</button>
+            <span class="ssbc-small">Все сообщения банка №20 с упоминанием постов, независимо от автора</span>
+          </div>
+          <div id="ssbc-oldclaims-list" class="ssbc-oldclaims-list ssbc-small" aria-live="polite">Список появится после проверки истории.</div>
+        </section>
+        <div class="ssbc-fields" style="margin:12px 0 7px">
+          <label>ID банковской заявки для диагностики
+            <input type="number" id="ssbc-inspect-id" min="1" step="1" value="72483">
+          </label>
+          <button type="button" id="ssbc-inspect" class="ssbc-button ssbc-button-light" disabled>Проверить ссылки заявки</button>
+        </div>
+        <div id="ssbc-inspect-result" class="ssbc-small" aria-live="polite"></div>
         <div id="ssbc-result"></div>
         <div id="ssbc-actions" hidden>
           <div class="ssbc-actions">
@@ -99,15 +116,38 @@
     topicPageSize: 100,
     topicMaxSkip: 10000, // актуальный предел topic.get; для сверхбольших форумов сообщаем об ошибке
     maxBankPages: 350,
-    delayMs: 85
+    delayMs: 85,
+    // Чтобы не перегрузить Rusff, исходники старых заявок читаются максимум по 2 одновременно.
+    bankRawConcurrency: 2,
+    bankRawDelayMs: 180
   };
   var $ = function (selector) { return root.querySelector(selector); };
   var currentAdminId = Number(window.UserID || 0);
   var userId = currentAdminId; // меняется по выбранному ID профиля при расчёте
   var userName = String(window.UserLogin || '');
-  var state = { rows: [], used: new Map(), suspicious: [], full: false, raw: '', historyCount: 0 };
+  var state = { rows: [], used: new Map(), suspicious: [], claimDetails: new Map(), full: false, raw: '', historyCount: 0 };
+  var bankHistoryCache = null; // только на время открытой страницы, без хранения на сервере/в localStorage
   var b = function (s) { return String(s == null ? '' : s); };
   var sleep = function (n) { return new Promise(function (done) { setTimeout(done, n); }); };
+
+  // Формы слова «пост», включая уменьшительные формы и форумное «постописец».
+  // Явно перечисленные окончания позволяют не путать «посты» с «постоянно», «постер» и «построить».
+  var claimPostWord = /(?:^|[^\p{L}\p{N}_])пост(?:ы|ов|а|у|е|ом|ам|ами|ах|ик(?:и|ов|а|у|е|ом|ам|ами|ах)?|опис(?:ец|ца|цу|цем|цы|цев|цам|цами|цах))?(?=$|[^\p{L}\p{N}_])/iu;
+  function mentionsPostWord(text) {
+    return claimPostWord.test(b(text).replace(/\u00a0/g, ' '));
+  }
+  function renderPriorClaims(history) {
+    var container = $('#ssbc-oldclaims-list');
+    var messages = (history.postClaimMessages || []).slice().sort(function(a,z) { return z.id-a.id; });
+    var html = '<p style="margin:0 0 7px"><b>Найдено заявок: ' + messages.length + '</b> (тема №20; новые сверху).</p>';
+    if (!messages.length) html += '<p>Сообщений с упоминанием постов не найдено.</p>';
+    else html += messages.map(function (item) {
+      return '<div class="ssbc-claim-entry"><a target="_blank" rel="noopener noreferrer" href="' +
+        link(item.id) + '">Заявка #' + item.id + '</a>' +
+        (item.author ? ' — ' + escapeHtml(item.author) : '') + '</div>';
+    }).join('');
+    container.innerHTML = html;
+  }
   var link = function (pid) { return '/viewtopic.php?pid=' + pid + '#p' + pid; };
   var show = function (message, kind) {
     var box = $('#ssbc-status');
@@ -201,9 +241,10 @@
   function claimData(html) {
     var doc = new DOMParser().parseFromString('<div id="ssbc-claim">' + b(html) + '</div>', 'text/html');
     var el = doc.getElementById('ssbc-claim');
-    // Убираем чужие цитаты, но НЕ удаляем [code], pre и спойлеры:
-    // реальные старые заявки часто хранят подтверждающие ссылки именно в них.
-    el.querySelectorAll('blockquote, .quote-box, script, style').forEach(function (x) { x.remove(); });
+    // Старые заявки иногда оформлялись целиком внутри [quote] или [code].
+    // Для защиты от повторных заявок проверяем ВСЕ ссылки сообщения,
+    // включая цитаты и спойлеры. Только скрипты/стили исключаем.
+    el.querySelectorAll('script, style').forEach(function (x) { x.remove(); });
     var ids = new Set();
     el.querySelectorAll('a[href]').forEach(function (a) {
       var id = postIdFromLink(a.getAttribute('href'));
@@ -211,7 +252,7 @@
     });
     // Ссылки встречаются как HTML, обычный текст, [url=...],
     // а иногда HTML из API экранирован: &lt;a href=&quot;...&quot;&gt;.
-    var sources = [el.innerHTML, el.textContent];
+    var sources = [b(html), el.innerHTML, el.textContent];
     var seenRaw = new Set();
     sources.forEach(function (source) {
       var raw = decodeLinkMarkup(source);
@@ -239,6 +280,61 @@
     return { ids: ids, uncertain: uncertain };
   }
 
+  // Rusff отдает исходный BBCode на странице редактирования.
+  // ВАЖНО: только GET, никакой отправки формы и никаких изменений постов.
+  // Это принципиально отличается от анализа визуального HTML: внутри
+  // [spoiler], [code] и [quote] все исходные [url=...] остаются в textarea.
+  async function rawBankPost(bankPostId) {
+    var addresses = ['/edit.php?id=' + bankPostId, '/edit.php?id=' + bankPostId + '&action=edit'];
+    for (var attempt = 0; attempt < addresses.length; attempt++) {
+      var response;
+      try {
+        response = await fetch(addresses[attempt], {credentials:'same-origin', cache:'no-store'});
+        if (!response.ok) continue;
+        var html = await response.text();
+        var doc = new DOMParser().parseFromString(html, 'text/html');
+        // Не доверяем произвольной textarea: требуется поле редактора сообщения.
+        var input = doc.querySelector('textarea#main-reply, textarea[name="req_message"], textarea[name="message"]');
+        if (!input) continue;
+        var value = input.value || input.textContent || '';
+        if (value.trim()) return value;
+      } catch (e) {
+        // Пробуем поддерживаемый альтернативный URL. Ни один вариант не пишет данные.
+      }
+    }
+    throw new Error('Исходный BBCode заявки #' + bankPostId +
+      ' не прочитан из edit.php. Возможно, у аккаунта нет прав редактирования чужих постов или сработала защита Rusff. Чтобы не считать уже оплаченные посты повторно, расчёт остановлен.');
+  }
+
+  // Читаем ВСЕ ответы банка, а не только заявки со словом "пост".
+  // Эвристики ненадёжны: часть длинных заявок скрыта целиком под спойлером.
+  async function allRawBankPosts(bankPostIds, topicId) {
+    var result = new Map();
+    var cursor = 0;
+    var finished = 0;
+    var failure = null;
+    var workers = Math.min(CFG.bankRawConcurrency, bankPostIds.length);
+    async function worker() {
+      while (cursor < bankPostIds.length && !failure) {
+        var id = bankPostIds[cursor++];
+        try {
+          result.set(id, await rawBankPost(id));
+          finished++;
+          if (finished === 1 || finished % 10 === 0 || finished === bankPostIds.length)
+            show('Исходный BBCode банка №' + topicId + ': проверено ' + finished + ' из ' + bankPostIds.length + ' старых заявок…');
+        } catch (e) {
+          failure = e;
+        }
+        if (!failure) await sleep(CFG.bankRawDelayMs);
+      }
+    }
+    await Promise.all(Array.from({length: workers}, worker));
+    if (failure) throw failure;
+    if (result.size !== bankPostIds.length)
+      throw new Error('Получены не все исходные заявки банка №' + topicId + '. Расчёт отменён.');
+    return result;
+  }
+
   async function bankTopicInfo(topicId) {
     var data = array(await api('topic.get', {
       topic_id: topicId, fields: 'id,forum_id,num_replies,init_post,first_post', limit: 1
@@ -247,84 +343,132 @@
     return data[0];
   }
 
-  // Тщательно проверяем ВСЮ историю единственного банка №20 — не допускаем частичного сканирования.
+  // Сверяем ВСЮ историю банка №20 тремя источниками: API, HTML и исходный BBCode.
+  // Иначе спойлер, скрытый в HTML и от API, может дать повторное начисление.
   async function bankHistoryOne(topicId) {
     var topic = await bankTopicInfo(topicId);
     var expected = Number(topic.num_replies) + 1;
     if (!Number.isSafeInteger(expected) || expected < 1)
       throw new Error('Не удалось определить количество сообщений темы №' + topicId);
-    var bankRows = [];
+    var apiRows = [];
     if (expected <= CFG.maxSkip + CFG.pageSize) {
       for (var skip = 0; skip < expected; skip += CFG.pageSize) {
-        show('Тема №' + topicId + ': проверяю ' + Math.min(skip + CFG.pageSize, expected) + ' из ' + expected + ' сообщений…');
+        show('API банка №' + topicId + ': проверяю ' + Math.min(skip + CFG.pageSize, expected) + ' из ' + expected + ' сообщений…');
         var page = array(await api('post.get', {
           topic_id: topicId, fields: 'id,user_id,username,message,posted,topic_id',
           sort_by: 'posted', sort_dir: 'asc', skip: skip, limit: CFG.pageSize
         }));
-        bankRows.push.apply(bankRows, page);
+        apiRows.push.apply(apiRows, page);
         if (!page.length) break;
         await sleep(CFG.delayMs);
       }
-      if (new Set(bankRows.map(function (p) { return Number(p.id); })).size !== expected)
-        bankRows = await bankHistoryFromPages(expected, topicId);
-    } else {
-      bankRows = await bankHistoryFromPages(expected, topicId);
     }
-    if (new Set(bankRows.map(function (p) { return Number(p.id); })).size !== expected)
-      throw new Error('Не удалось прочесть ВСЮ историю темы №' + topicId + ' (' + bankRows.length + ' из ' + expected + '). Расчёт остановлен.');
-
+    var htmlRows = await bankHistoryFromPages(expected, topicId);
+    var htmlById = new Map(htmlRows.map(function (p) { return [Number(p.id), p]; }));
+    if (htmlById.size !== expected)
+      throw new Error('HTML банка №' + topicId + ' прочитан не полностью: ' + htmlById.size +
+        ' из ' + expected + ' сообщений. Расчёт остановлен.');
+    var apiById = new Map(apiRows.map(function (p) { return [Number(p.id), p]; }));
+    if (apiRows.length && (apiById.size !== expected ||
+        Array.from(apiById.keys()).some(function (id) { return !htmlById.has(id); }))) {
+      throw new Error('Списки сообщений API и HTML банка №' + topicId +
+        ' не совпадают. Расчёт остановлен для проверки истории.');
+    }
     var firstId = Number(topic.init_post) || Number(topic.first_post) ||
-      Math.min.apply(null, bankRows.map(function (r) { return Number(r.id); }));
+      Math.min.apply(null, Array.from(htmlById.keys()));
+    var idsToAudit = Array.from(htmlById.keys()).filter(function (id) { return id !== firstId; });
+    // Ключевое изменение: НЕ считаем HTML/API единственным источником ссылок.
+    var rawById = await allRawBankPosts(idsToAudit, topicId);
     var used = new Map();
     var uncertain = [];
-    bankRows.forEach(function (post) {
-      if (Number(post.id) === firstId) return; // первый пост: правила/содержимое темы
-      // В действующем банке №20 все сообщения после первого — потенциальные заявки.
-      var data = claimData(post.message);
-      data.ids.forEach(function (id) {
-        if (!used.has(id)) used.set(id, {bankPostId: Number(post.id), topicId: topicId, author: b(post.username)});
+    var claimDetails = new Map();
+    var postClaimMessages = [];
+    var restoredFromRaw = 0;
+    htmlById.forEach(function (htmlPost, bankPostId) {
+      if (bankPostId === firstId) return;
+      var apiPost = apiById.get(bankPostId);
+      var htmlData = claimData(htmlPost.message || '');
+      var apiData = apiPost ? claimData(apiPost.message || '') : {ids:new Set(), uncertain:false};
+      var rawData = claimData(rawById.get(bankPostId));
+      var seenInRender = new Set([...htmlData.ids, ...apiData.ids]);
+      var ids = new Set([...seenInRender, ...rawData.ids]);
+      rawData.ids.forEach(function (id) { if (!seenInRender.has(id)) restoredFromRaw++; });
+      var author = b((apiPost && apiPost.username) || htmlPost.username || '');
+      // Список прежних заявок составляем по ВСЕМ исходным сообщениям банка,
+      // а не только по сообщениям с распознанными ссылками на игровые посты.
+      if ([rawById.get(bankPostId), htmlPost.message, apiPost && apiPost.message]
+          .some(mentionsPostWord)) {
+        postClaimMessages.push({id: bankPostId, author: author});
+      }
+      claimDetails.set(bankPostId, {
+        ids:ids, htmlIds:htmlData.ids, apiIds:apiData.ids, rawIds:rawData.ids,
+        htmlLength:b(htmlPost.message).length,
+        apiLength:apiPost ? b(apiPost.message).length : null,
+        rawLength:b(rawById.get(bankPostId)).length, author:author
       });
-      if (data.uncertain) uncertain.push({id: Number(post.id), topicId: topicId,
-        userId: Number(post.user_id), author: b(post.username)});
+      ids.forEach(function (id) {
+        if (!used.has(id)) used.set(id, {bankPostId:bankPostId, topicId:topicId, author:author});
+      });
+      if (!ids.size && (htmlData.uncertain || apiData.uncertain || rawData.uncertain)) {
+        uncertain.push({id:bankPostId, topicId:topicId,
+          userId:Number((apiPost && apiPost.user_id) || htmlPost.user_id || 0), author:author});
+      }
     });
-    return {used: used, suspicious: uncertain, historyCount: bankRows.length - 1};
+    return {used:used, suspicious:uncertain, historyCount:htmlById.size - 1,
+      rawCount:rawById.size, restoredFromRaw:restoredFromRaw, claimDetails:claimDetails,
+      postClaimMessages:postClaimMessages};
   }
 
   async function bankHistory() {
+    // В течение одной открытой страницы не читаем сотни исходников заново.
+    // Перезагрузка вкладки сбрасывает кэш и читает обновлённые заявления.
+    if (bankHistoryCache) return bankHistoryCache;
     var used = new Map();
     var suspicious = [];
     var historyCount = 0;
+    var rawCount = 0;
+    var restoredFromRaw = 0;
+    var claimDetails = new Map();
+    var postClaimMessages = [];
     for (var topicId of CFG.bankTopics) {
       var h = await bankHistoryOne(topicId);
       h.used.forEach(function (value, key) { if (!used.has(key)) used.set(key, value); });
+      h.claimDetails.forEach(function (value, key) { claimDetails.set(key, value); });
+      postClaimMessages.push.apply(postClaimMessages, h.postClaimMessages);
       suspicious.push.apply(suspicious, h.suspicious);
       historyCount += h.historyCount;
+      rawCount += h.rawCount;
+      restoredFromRaw += h.restoredFromRaw;
     }
-    return {used: used, suspicious: suspicious, historyCount: historyCount};
+    bankHistoryCache = {used:used, suspicious:suspicious, historyCount:historyCount,
+      claimDetails:claimDetails, rawCount:rawCount, restoredFromRaw:restoredFromRaw,
+      postClaimMessages:postClaimMessages};
+    return bankHistoryCache;
   }
 
-  // При достижении лимита skip=1000 переключаемся на полный обход страниц.
+  // HTML видят сами пользователи под аккаунтом АМС; читаем страницы последовательно.
+  // ВАЖНО: блоки [code], [quote], спойлеры и ссылки сохраняем, не чистим HTML.
   async function bankHistoryFromPages(expected, topicId) {
     var all = new Map();
     var stagnant = 0;
     for (var p = 1; p <= CFG.maxBankPages; p++) {
-      show('Тема №' + topicId + ': страница ' + p + ', прочитано ' + all.size + ' из ' + expected + '…');
+      show('HTML банка №' + topicId + ': страница ' + p + ', прочитано ' + all.size + ' из ' + expected + '…');
       var resp = await fetch('/viewtopic.php?id=' + topicId + '&p=' + p,
-        {credentials: 'same-origin', cache: 'no-store'});
-      if (!resp.ok) break;
+        {credentials:'same-origin', cache:'no-store'});
+      if (!resp.ok) throw new Error('Не удалось открыть страницу ' + p + ' банка №' + topicId + ': HTTP ' + resp.status);
       var html = await resp.text();
       var doc = new DOMParser().parseFromString(html, 'text/html');
       var nodes = doc.querySelectorAll('.post[id]');
       var before = all.size;
       nodes.forEach(function (post) {
-        var idm = (post.id || '').match(/(?:^p|post)(\d+)$/i);
+        var idm = (post.id || '').match(/^(?:p|post)(\d+)$/i);
         if (!idm) return;
         var content = post.querySelector('.post-content') || post.querySelector('.post-body');
         if (!content) return;
         var userId = Number(post.getAttribute('data-user-id')) || 0;
         var uname = post.querySelector('.pa-author a');
-        all.set(Number(idm[1]), {id: Number(idm[1]), message: content.innerHTML,
-          user_id: userId, username: uname ? uname.textContent : ''});
+        all.set(Number(idm[1]), {id:Number(idm[1]), message:content.innerHTML,
+          user_id:userId, username:uname ? uname.textContent : ''});
       });
       if (all.size >= expected) break;
       stagnant = all.size === before ? stagnant + 1 : 0;
@@ -615,19 +759,28 @@
     state.rows = newRows;
     state.used = history.used;
     state.suspicious = history.suspicious;
+    state.claimDetails = history.claimDetails;
+    $('#ssbc-inspect').disabled = false;
+    inspectClaim();
     state.historyCount = history.historyCount;
     state.full = true;
+    renderPriorClaims(history);
     var total = newRows.reduce(function (acc, p) { return acc + p.sum; }, 0);
     var html = '<div class="ssbc-summary"><b>' + newRows.length + '</b> новых · <b>' + usedRows.length +
       '</b> уже заявлены · <b>' + tooShort.length + '</b> короче 1000 символов<br><b>Итого: +' + money(total) + ' галлеонов</b></div>';
-    html += '<p class="ssbc-small">Проверено ' + history.historyCount + ' сообщений темы №20. Найдено ' + history.used.size + ' уникальных ID постов в старых заявках. Посты из заявок любого игрока исключены по ID.</p>';
+    html += '<p class="ssbc-small">Проверено ' + history.historyCount + ' сообщений темы №20. Защищено от повторного начисления ' +
+      history.used.size + ' уникальных ID. Проверено исходных заявок: ' + history.rawCount +
+      '; дополнительных ссылок, найденных только в исходном BBCode: ' + history.restoredFromRaw +
+      '. Посты из заявок любого игрока исключаются по ID.</p>';
+    html += '<div class="ssbc-status ok"><b>Полная сверка выполнена:</b> прочитан исходный BBCode всех ' + history.rawCount +
+      ' банковских сообщений (кроме первого). Из скрытого содержимого восстановлено ' + history.restoredFromRaw + ' ссылок, не видимых в API/HTML.</div>';
     if (usedRows.length) {
       html += '<details class="ssbc-small"><summary style="cursor:pointer">Показать уже заявленные посты (' +
         usedRows.length + ')</summary><div style="padding:7px 10px">' +
         usedRows.map(function (post) {
           var info = history.used.get(Number(post.id));
           return '<a target="_blank" rel="noopener" href="' + link(post.id) + '">Пост #' + post.id + '</a>' +
-            (info ? ' — <a target="_blank" rel="noopener" href="' + link(info.bankPostId) +
+            (info && info.bankPostId ? ' — <a target="_blank" rel="noopener" href="' + link(info.bankPostId) +
               '">заявлен в теме №' + info.topicId + '</a>' : ' — уже заявлен');
         }).join('<br>') + '</div></details>';
     }
@@ -664,7 +817,32 @@
     $('#ssbc-result').querySelectorAll('input[type="checkbox"]').forEach(function (input) {
       input.addEventListener('change', buildBBCode);
     });
-    show('Проверка темы №20 завершена. Отметь подходящие посты и скопируй заявку.', 'ok');
+    show('История банка №20 проверена по исходному BBCode всех заявок (v2.7). Отметь подходящие посты и скопируй заявку.', 'ok');
+  }
+
+  function inspectClaim() {
+    var bankId = Number($('#ssbc-inspect-id').value);
+    var target = $('#ssbc-inspect-result');
+    if (!Number.isSafeInteger(bankId) || bankId < 1) {
+      target.textContent = 'Укажи ID банковской заявки.'; return;
+    }
+    var entry = state.claimDetails.get(bankId);
+    if (!entry) {
+      target.innerHTML = '<div class="ssbc-alert">Заявка <b>#' + bankId + '</b> не найдена в прочитанной истории банка №20. Проверь ссылку на сообщение.</div>';
+      return;
+    }
+    var ids = Array.from(entry.ids).sort(function (a,z) {return a-z;});
+    var items = ids.map(function (id) {
+      return '<a target="_blank" rel="noopener" href="' + link(id) + '">#' + id + '</a>';
+    }).join(', ');
+    target.innerHTML = '<div class="ssbc-status ' + (ids.length ? 'ok' : 'error') + '">' +
+      '<b><a target="_blank" rel="noopener" href="' + link(bankId) + '">Заявка банка #' + bankId + '</a></b>: ' +
+      (ids.length ? ('найдено игровых ссылок: <b>' + ids.length + '</b>. ' + items) :
+        'ни одной распознаваемой ссылки на игровой пост. Требуется ручная сверка.') +
+      '<br><small>Из HTML: ' + entry.htmlIds.size + ' ID; из API: ' + entry.apiIds.size +
+      '; из исходного BBCode: ' + entry.rawIds.size + '; длина HTML: ' + entry.htmlLength +
+      '; длина API: ' + (entry.apiLength==null ? 'не прочитано' : entry.apiLength) +
+      '; длина исходника: ' + entry.rawLength + '</small></div>';
   }
 
   function buildBBCode() {
@@ -732,6 +910,10 @@
       var fast = $('#ssbc-fast').checked;
       show('Сверяю старые заявки только в теме №20…');
       var history = await bankHistory();
+      renderPriorClaims(history);
+      state.claimDetails = history.claimDetails;
+      $('#ssbc-inspect').disabled = false;
+      inspectClaim();
       var posts = await userPosts(since);
       if (posts.length && posts[0].username) userName = b(posts[0].username);
       // Не запрашиваем историю эпизодов ради уже оплаченных или коротких постов.
@@ -750,6 +932,22 @@
     $('#ssbc-custom').hidden = this.value !== 'custom';
   });
   $('#ssbc-scan').addEventListener('click', calculate);
+  $('#ssbc-load-claims').addEventListener('click', async function () {
+    var button = this;
+    button.disabled = true;
+    try {
+      show('Проверяю сообщения банка №20 для списка предыдущих заявок…');
+      var history = await bankHistory();
+      renderPriorClaims(history);
+      state.claimDetails = history.claimDetails;
+      $('#ssbc-inspect').disabled = false;
+      show('Найдено ' + history.postClaimMessages.length + ' сообщений банка №20 с упоминанием постов. Ссылки показаны ниже.', 'ok');
+    } catch (error) {
+      show('Не удалось построить полный список заявок: ' + error.message, 'error');
+      $('#ssbc-oldclaims-list').textContent = 'Проверка истории завершилась ошибкой; неполный список не показывается.';
+    } finally { button.disabled = false; }
+  });
+  $('#ssbc-inspect').addEventListener('click', inspectClaim);
   $('#ssbc-copy').addEventListener('click', function () {
     buildBBCode();
     copy(state.raw).then(function () { show('BBCode скопирован. При следующем расчёте проверяются только заявки из банка №20.', 'ok'); })
