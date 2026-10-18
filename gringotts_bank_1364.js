@@ -1,7 +1,7 @@
 // Safe Space / Gringotts — внешний файл для HTML-низа
 // Встроенный интерфейс доступен только администратору в теме /viewtopic.php?id=1364.
 
-/* Safe Space / Gringotts: закрытый сборщик заявок v2.8 (предыдущие заявки и новые посты только выбранного профиля).
+/* Safe Space / Gringotts: закрытый сборщик заявок v2.10 (предыдущие заявки и новые посты только выбранного профиля).
  * Показывается только на safespace.rusff.me/viewtopic.php?id=1364,
  * только авторизованным администраторам форума (GroupID===1).
  * Использует тарифы по действующим правилам банка, а историю заявок
@@ -49,8 +49,8 @@
   root.id = 'ssbc';
   root.className = 'ssbc-wrap';
   root.innerHTML = String.raw`
-        <h3 class="ssbc-headline">Гринготтс · закрытый сборщик АМС <small style="font-size:10px">v2.8</small></h3>
-        <p class="ssbc-intro">Проверка постов выбранного игрока и старых заявок только из банка №20. Читаем исходный BBCode каждой старой заявки, включая закрытые спойлеры. Ничего не начисляется автоматически.</p>
+        <h3 class="ssbc-headline">Автоматический подсчет постов</h3>
+        <p class="ssbc-intro">Выберите период и нажмите «Проверить».</p>
         <div class="ssbc-fields">
           <label>ID профиля игрока (число из profile.php?id=…)
             <input type="number" id="ssbc-target" min="2" step="1" placeholder="Например: 7">
@@ -71,9 +71,8 @@
             <input type="number" id="ssbc-balance" step="any" min="0" placeholder="Введите вручную">
           </label>
         </div>
-        <label class="ssbc-check"><input id="ssbc-fast" type="checkbox" checked> Добавлять +10 за ответ в течение суток в личных эпизодах и альтернативе (включая архивы), кроме тем №687 и №418</label>
-        <button type="button" id="ssbc-scan" class="ssbc-button">Посчитать посты</button>
-        <div id="ssbc-status" class="ssbc-status">Выберите игрока и период. История заявок сверяется только с темой №20.</div>
+        <button type="button" id="ssbc-scan" class="ssbc-button">Проверить</button>
+        <div id="ssbc-status" class="ssbc-status">Выберите игрока и период</div>
         <div id="ssbc-result" aria-live="polite"></div>
         <div id="ssbc-actions" hidden>
           <div class="ssbc-actions">
@@ -82,7 +81,7 @@
             <button type="button" id="ssbc-insert" class="ssbc-button">Вставить в ответ темы №1364</button>
           </div>
           <textarea id="ssbc-text" readonly aria-label="Текст банковской заявки"></textarea>
-          <p class="ssbc-small">Публичная тема №20 остаётся нетронутой. Заявки из темы №1364 НЕ проверяются на повторы: если тестовые заявки станут реальными, переносите подтверждения в банк №20 либо сверяйте их вручную. Старые выплаты без отдельных ссылок требуют ручной сверки. Бонус за 50 постов и другие награды считаются отдельно.</p>
+
         </div>`;
   if (firstPost) firstPost.insertAdjacentElement('beforebegin', root);
   else mountPoint.insertAdjacentElement('afterbegin', root);
@@ -110,7 +109,7 @@
   var currentAdminId = Number(window.UserID || 0);
   var userId = currentAdminId; // меняется по выбранному ID профиля при расчёте
   var userName = String(window.UserLogin || '');
-  var state = { rows: [], used: new Map(), suspicious: [], claimDetails: new Map(), full: false, raw: '', historyCount: 0 };
+  var state = { rows: [], used: new Map(), suspicious: [], claimDetails: new Map(), priorClaims: [], full: false, raw: '', historyCount: 0 };
   var bankHistoryCache = null; // только на время открытой страницы, без хранения на сервере/в localStorage
   var b = function (s) { return String(s == null ? '' : s); };
   var sleep = function (n) { return new Promise(function (done) { setTimeout(done, n); }); };
@@ -125,19 +124,24 @@
   // Второй источник связи: заявление может быть написано другим аккаунтом,
   // но включать реальные игровые сообщения выбранного игрока.
   // Такие связи проверяются по ID конкретных игровых постов, а не по имени.
-  function renderPriorClaims(history, targetId, playerPosts) {
+  function getPriorClaims(history, targetId, playerPosts) {
     var authorId = Number(targetId);
     var bankIdsForPlayerPosts = new Set();
     (playerPosts || []).forEach(function (post) {
       var record = history.used.get(Number(post.id));
       if (record && record.bankPostId) bankIdsForPlayerPosts.add(Number(record.bankPostId));
     });
-    var messages = (history.postClaimMessages || []).filter(function (entry) {
+    // Один и тот же набор заявок используется в видимом списке и в готовом BBCode.
+    // Учитываются свои заявки и заявки с другого профиля на посты выбранного игрока.
+    return (history.postClaimMessages || []).filter(function (entry) {
       return Number(entry.userId) === authorId || bankIdsForPlayerPosts.has(Number(entry.id));
     }).slice().sort(function (a, z) { return z.id - a.id; });
+  }
+  function renderPriorClaims(messages, targetId) {
+    var authorId = Number(targetId);
     var html = '<section class="ssbc-oldclaims"><h4>Ваши предыдущие заявки на посты:</h4>';
     html += '<div class="ssbc-oldclaims-list">';
-    if (!messages.length) html += '<p class="ssbc-small">Заявок на посты этого профиля в банке №20 не найдено.</p>';
+    if (!messages.length) html += '<p class="ssbc-small">Предыдущих заявок не найдено.</p>';
     else html += messages.map(function (entry) {
       var foreign = Number(entry.userId) !== authorId;
       return '<div class="ssbc-claim-entry"><a target="_blank" rel="noopener noreferrer" href="' +
@@ -145,14 +149,14 @@
         (foreign ? ' <span class="ssbc-small">(с другого профиля' +
           (entry.author ? ': ' + escapeHtml(entry.author) : '') + ')</span>' : '') + '</div>';
     }).join('');
-    html += '</div><p class="ssbc-small">Найдено заявок: ' + messages.length +
-      '. Источник — тема №20; заявки, поданные другим профилем, определяются по ссылкам на посты за выбранный период.</p></section>';
+    html += '</div></section>';
     return html;
   }
   var link = function (pid) { return '/viewtopic.php?pid=' + pid + '#p' + pid; };
   var show = function (message, kind) {
     var box = $('#ssbc-status');
-    box.textContent = message;
+    // Не показываем игроку ID банка, количество просмотренных сообщений и детали API.
+    box.textContent = kind ? message : 'Идёт проверка постов и предыдущих заявок…';
     box.className = 'ssbc-status ' + (kind || '');
   };
   var dateOf = function (seconds) {
@@ -770,43 +774,21 @@
     state.suspicious = history.suspicious;
     state.claimDetails = history.claimDetails;
     state.historyCount = history.historyCount;
+    state.priorClaims = getPriorClaims(history, userId, rows);
     state.full = true;
     var total = newRows.reduce(function (acc, p) { return acc + p.sum; }, 0);
-    var html = renderPriorClaims(history, userId, rows);
+    var html = renderPriorClaims(state.priorClaims, userId);
     html += '<section class="ssbc-oldclaims" aria-label="Новые посты"><h4>Новые посты:</h4>';
-    html += '<div class="ssbc-summary"><b>' + newRows.length + '</b> новых · <b>' + usedRows.length +
-      '</b> уже заявлены · <b>' + tooShort.length + '</b> короче 1000 символов<br><b>К начислению: +' + money(total) + ' галлеонов</b>' +
+    html += '<div class="ssbc-summary"><b>Новых постов: ' + newRows.length + '</b><br>' +
+      '<b>К начислению: +' + money(total) + ' галлеонов</b>' +
       '<div id="ssbc-balance-preview" class="ssbc-small"></div></div>';
-    html += '<p class="ssbc-small">Проверено ' + history.historyCount + ' сообщений темы №20. Защищено от повторного начисления ' +
-      history.used.size + ' уникальных ID. Проверено исходных заявок: ' + history.rawCount +
-      '; дополнительных ссылок, найденных только в исходном BBCode: ' + history.restoredFromRaw +
-      '. Посты из заявок любого игрока исключаются по ID.</p>';
-    html += '<div class="ssbc-status ok"><b>Полная сверка выполнена:</b> прочитан исходный BBCode всех ' + history.rawCount +
-      ' банковских сообщений (кроме первого). Из скрытого содержимого восстановлено ' + history.restoredFromRaw + ' ссылок, не видимых в API/HTML.</div>';
-    if (usedRows.length) {
-      html += '<details class="ssbc-small"><summary style="cursor:pointer">Показать уже заявленные посты (' +
-        usedRows.length + ')</summary><div style="padding:7px 10px">' +
-        usedRows.map(function (post) {
-          var info = history.used.get(Number(post.id));
-          return '<a target="_blank" rel="noopener" href="' + link(post.id) + '">Пост #' + post.id + '</a>' +
-            (info && info.bankPostId ? ' — <a target="_blank" rel="noopener" href="' + link(info.bankPostId) +
-              '">заявлен в теме №' + info.topicId + '</a>' : ' — уже заявлен');
-        }).join('<br>') + '</div></details>';
-    }
-    var relevant = history.suspicious.filter(function (p) { return !p.userId || p.userId === userId; });
-    if (history.suspicious.length) {
-      html += '<div class="ssbc-alert"><b>Ручная сверка:</b> найдены ' + history.suspicious.length +
-        ' старых банковских сообщений с упоминанием постов, но без отдельных ссылок. ' +
-        (relevant.length ? ('Из них ' + relevant.length + ' от текущего профиля или с неизвестным автором. ') : '') +
-        'По ним невозможно определить уже оплаченные ID автоматически. ' +
-        '<details><summary>Посмотреть подозрительные заявки</summary>' +
-        history.suspicious.slice(0, 80).map(function (p) {
-          return '<a target="_blank" rel="noopener" href="' + link(p.id) + '">Заявка #' + p.id +
-            '</a> (' + escapeHtml(p.author || 'автор не определён') + ')';
-        }).join('<br>') + '</details></div>';
-    }
-    if (ctx.needsReview.length) {
-      html += '<div class="ssbc-alert">' + ctx.needsReview.map(escapeHtml).join('<br>') + '</div>';
+    // Техническая статистика, перечень уже использованных ссылок и диагностика
+    // остаются внутри расчёта, не загромождая страницу игрока.
+    if (history.suspicious.length || ctx.needsReview.length) {
+      console.info('[Gringotts] Требуется дополнительная сверка:', {
+        oldClaimsWithoutLinks: history.suspicious.length,
+        gameTopicsNeedingReview: ctx.needsReview.slice()
+      });
     }
     html += '<div class="ssbc-rows">';
     newRows.forEach(function (p) {
@@ -818,7 +800,11 @@
     if (!newRows.length) html += '<p>Новых подходящих постов за этот период нет.</p>';
     html += '</div></section>';
     if (history.suspicious.length) {
-      html += '<label class="ssbc-confirm"><input type="checkbox" id="ssbc-reviewed"> Я проверил(а) старые заявки без ссылок и убедился(ась), что новые посты не были оплачены ранее</label>';
+      html += '<label class="ssbc-confirm"><input type="checkbox" id="ssbc-reviewed"> ' +
+        'Я проверил(а) предыдущие заявки без ссылок и подтвердил(а), что новые посты ещё не оплачены</label>';
+    }
+    if (ctx.needsReview.length) {
+      html += '<p class="ssbc-small">Некоторые эпизоды требуют ручной проверки; убедитесь, что все выбранные посты подходят для начисления.</p>';
     }
     $('#ssbc-result').innerHTML = html;
     $('#ssbc-actions').hidden = false;
@@ -826,7 +812,7 @@
     $('#ssbc-result').querySelectorAll('input[type="checkbox"]').forEach(function (input) {
       input.addEventListener('change', buildBBCode);
     });
-    show('Заявки выбранного профиля и новые посты рассчитаны (v2.8). Отметь подходящие посты и скопируй заявку.', 'ok');
+    show('Расчёт готов.', 'ok');
   }
 
   function buildBBCode() {
@@ -840,7 +826,16 @@
     var total = selected.reduce(function (n, row) { return n + row.sum; }, 0);
     var lines = ['[b]Профиль:[/b] [url=' + location.origin + '/profile.php?id=' + userId + ']' +
       userName.replace(/[\[\]]/g, '') + '[/url] (ID ' + userId + ')',
-      '[b]За что:[/b] Игровые посты (проверенный расчёт)'];
+      '', '[b]Ваши предыдущие заявки на посты:[/b]'];
+    if (state.priorClaims.length) {
+      state.priorClaims.forEach(function (entry) {
+        lines.push('[url=' + location.origin + link(entry.id) + ']Заявка #' + entry.id + '[/url]' +
+          (Number(entry.userId) !== userId ? ' (с другого профиля)' : ''));
+      });
+    } else {
+      lines.push('Предыдущих заявок не найдено.');
+    }
+    lines.push('', '[b]Новые посты:[/b]');
     if (game.length) {
       lines.push('', '[b]Основная / сюжетная игра (' + game.length + ' × 30):[/b]');
       game.forEach(function (p) { lines.push('[url=' + location.origin + link(p.id) + ']Пост #' + p.id + '[/url] — 30'); });
@@ -870,8 +865,9 @@
     $('#ssbc-selected-total').textContent = 'К начислению: +' + money(total);
     var confirm = $('#ssbc-reviewed');
     var blocked = !!confirm && !confirm.checked;
-    $('#ssbc-copy').disabled = blocked || !selected.length;
-    $('#ssbc-insert').disabled = blocked || !selected.length;
+    var hasContent = selected.length > 0 || state.priorClaims.length > 0;
+    $('#ssbc-copy').disabled = blocked || !hasContent;
+    $('#ssbc-insert').disabled = blocked || !hasContent;
     return state.raw;
   }
   async function copy(text) {
@@ -891,11 +887,12 @@
     var btn = $('#ssbc-scan');
     btn.disabled = true;
     state.full = false;
+    state.priorClaims = [];
     $('#ssbc-actions').hidden = true;
     $('#ssbc-result').innerHTML = '';
     try {
       var since = selectedDate();
-      var fast = $('#ssbc-fast').checked;
+      var fast = true; // Автоматически проверяем ответы ≤24 часов в разрешённых разделах.
       show('Сверяю старые заявки только в теме №20…');
       var history = await bankHistory();
       state.claimDetails = history.claimDetails;
@@ -919,7 +916,7 @@
   $('#ssbc-scan').addEventListener('click', calculate);
   $('#ssbc-copy').addEventListener('click', function () {
     buildBBCode();
-    copy(state.raw).then(function () { show('BBCode скопирован. При следующем расчёте проверяются только заявки из банка №20.', 'ok'); })
+    copy(state.raw).then(function () { show('BBCode со старыми заявками и новыми постами скопирован.', 'ok'); })
       .catch(function (e) { show(e.message, 'error'); });
   });
   $('#ssbc-insert').addEventListener('click', function () {
@@ -941,9 +938,10 @@
   $('#ssbc-target').addEventListener('input', function () {
     $('#ssbc-balance').value = Number(this.value) === currentAdminId ? initialBalance() : '';
     state.full = false;
+    state.priorClaims = [];
     $('#ssbc-actions').hidden = true;
     $('#ssbc-result').innerHTML = '';
-    show('Профиль изменён. Запусти новую проверку банка №20.');
+    show('Выберите игрока и период', 'idle');
   });
   $('#ssbc-balance').addEventListener('input', buildBBCode);
   if (!userId || userId <= 1) {
